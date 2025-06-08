@@ -1,0 +1,21 @@
+{
+	"schemaVersion": 1,
+	"id": "axolotlclient-waypoints-common",
+	"version": "${version}",
+	"name": "AxolotlClient Waypoints (Common)",
+	"description": "Shared code for AxolotlClient Waypoints",
+	"authors": [
+		"moehreag"
+	],
+	"contributors": [
+	],
+	"contact": {
+		"homepage": "https://axolotlclient.github.io/",
+		"sources": "https://github.com/AxolotlClient/AxolotlClient-waypoints/"
+	},
+	"license": "LGPL-3.0-or-later",
+	"icon": "assets/axolotlclient/icon.png",
+	"environment": "client",
+	"entrypoints": {
+	}
+}

@@ -1,0 +1,49 @@
+{
+	"schemaVersion": 1,
+	"id": "axolotlclient-waypoints",
+	"version": "${version}",
+	"name": "AxolotlClient",
+	"description": "Waypoints addon for AxolotlClient",
+	"authors": [
+		"moehreag"
+	],
+	"contributors": [
+		"YakisikliBaran",
+		"DragonEggBedrockBreaking",
+		"TheKodeToad",
+		"CornetPanique86"
+	],
+	"contact": {
+		"homepage": "https://axolotlclient.github.io/",
+		"sources": "https://github.com/AxolotlClient/AxolotlClient-waypoints/"
+	},
+	"license": "LGPL-3.0-or-later",
+	"icon": "assets/axolotlclient/icon.png",
+	"accessWidener": "axolotlclient-waypoints.accesswidener",
+	"environment": "client",
+	"entrypoints": {
+		"client": [
+			"io.github.axolotlclient.waypoints.AxolotlClientWaypoints"
+		],
+		"modmenu": [
+			"io.github.axolotlclient.config.modmenu.ModMenuCompat"
+		]
+	},
+	"mixins": [
+		"axolotlclient-waypoints.mixins.json"
+	],
+	"custom": {
+		"modmenu:clientsideOnly": true
+	},
+	"depends": {
+		"fabricloader": ">=0.15.0",
+		"minecraft": "1.8.9",
+		"osl-resource-loader": "*",
+		"osl-lifecycle-events": "*",
+		"osl-keybinds": "*",
+		"osl-entrypoints": "*",
+		"axolotlclientconfig": "*",
+		"axolotlclient-waypoints-common": "*",
+		"axolotlclient": "*"
+	}
+}
