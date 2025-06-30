@@ -34,18 +34,18 @@ import io.github.axolotlclient.AxolotlClientConfig.impl.options.BooleanOption;
 import io.github.axolotlclient.AxolotlClientConfig.impl.options.ColorOption;
 import io.github.axolotlclient.AxolotlClientConfig.impl.options.IntegerOption;
 import io.github.axolotlclient.waypoints.AxolotlClientWaypoints;
-import io.github.axolotlclient.waypoints.util.ARGB;
 import io.github.axolotlclient.waypoints.waypoints.Waypoint;
 import net.minecraft.Util;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.gui.screens.inventory.EffectRenderingInventoryScreen;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.SectionPos;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.FastColor;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
@@ -54,7 +54,7 @@ import net.minecraft.world.level.chunk.status.ChunkStatus;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.material.MapColor;
-import org.joml.Vector2f;
+import org.joml.Vector3f;
 
 @SuppressWarnings("DataFlowIssue")
 public class Minimap {
@@ -66,7 +66,7 @@ public class Minimap {
 	private static final BooleanOption enabled = new BooleanOption("enabled", true);
 	private static final IntegerOption mapScale = new IntegerOption("map_scale", 1, 1, 5);
 	private static final BooleanOption showWaypoints = new BooleanOption("show_waypoints", true);
-	public static final BooleanOption useTextureSampling = new BooleanOption("use_texture_sampling", false);
+	//public static final BooleanOption useTextureSampling = new BooleanOption("use_texture_sampling", false);
 	private static final OptionCategory minimap = OptionCategory.create("minimap");
 	final int radius = 64, size = radius * 2;
 	private static final ResourceLocation texLocation = AxolotlClientWaypoints.rl("minimap");
@@ -80,7 +80,7 @@ public class Minimap {
 	private final Minecraft minecraft = Minecraft.getInstance();
 
 	public void init() {
-		minimap.add(enabled, useTextureSampling, lockMapToNorth, arrowScale, minimapOutline, outlineColor, mapScale, showWaypoints);
+		minimap.add(enabled, /* useTextureSampling,*/ lockMapToNorth, arrowScale, minimapOutline, outlineColor, mapScale, showWaypoints);
 		AxolotlClientWaypoints.category.add(Minimap.minimap);
 	}
 
@@ -89,8 +89,8 @@ public class Minimap {
 	}
 
 	public void setup() {
-		minecraft.getTextureManager().register(texLocation, tex = new DynamicTexture(texLocation::toString, pixels));
-		pixels.fillRect(0, 0, pixels.getWidth(), pixels.getHeight(), ARGB.opaque(0));
+		minecraft.getTextureManager().register(texLocation, tex = new DynamicTexture(pixels));
+		pixels.fillRect(0, 0, pixels.getWidth(), pixels.getHeight(), FastColor.ARGB32.opaque(0));
 		this.x = minecraft.getWindow().getGuiScaledWidth() - size - 10;
 		this.y = 10;
 	}
@@ -104,7 +104,8 @@ public class Minimap {
 		if (minecraft.isDemo()) {
 			this.y += 15;
 		}
-		if (!minecraft.player.getActiveEffects().isEmpty() && (minecraft.screen == null || !minecraft.screen.showsActiveEffects())) {
+		if (!minecraft.player.getActiveEffects().isEmpty() && (minecraft.screen == null ||
+			!(this.minecraft.screen instanceof EffectRenderingInventoryScreen<?> effectRenderingInventoryScreen && effectRenderingInventoryScreen.canSeeEffects()))) {
 			if (minecraft.player.getActiveEffects().stream().anyMatch(e -> !e.getEffect().value().isBeneficial())) {
 				this.y += 26;
 			}
@@ -112,24 +113,24 @@ public class Minimap {
 		}
 		final int x = this.x;
 		final int y = this.y;
-		guiGraphics.pose().pushMatrix();
+		guiGraphics.pose().pushPose();
 		{
 			guiGraphics.enableScissor(x, y, x + size, y + size);
-			guiGraphics.pose().pushMatrix();
-			guiGraphics.pose().translate(x, y);
-			guiGraphics.pose().translate(radius, radius);
+			guiGraphics.pose().pushPose();
+			guiGraphics.pose().translate(x, y, 0);
+			guiGraphics.pose().translate(radius, radius, 0);
 			if (!lockMapToNorth.get()) {
-				guiGraphics.pose().rotate((float) -(((minecraft.player.getVisualRotationYInDegrees() + 180) / 180) * Math.PI));
+				guiGraphics.pose().last().pose().rotate((float) -(((minecraft.player.getVisualRotationYInDegrees() + 180) / 180) * Math.PI), 0, 0, 1);
 			}
-			guiGraphics.pose().scale((float) Math.sqrt(2), (float) Math.sqrt(2));
-			guiGraphics.pose().scale(mapScale.get(), mapScale.get());
-			guiGraphics.pose().translate(-pixels.getWidth() / 2f, -pixels.getHeight() / 2f);
+			guiGraphics.pose().scale((float) Math.sqrt(2), (float) Math.sqrt(2), 1);
+			guiGraphics.pose().scale(mapScale.get(), mapScale.get(), 1);
+			guiGraphics.pose().translate(-pixels.getWidth() / 2f, -pixels.getHeight() / 2f, 0);
 			float offX, offZ;
 			offX = -(float) (minecraft.player.getX() - mapCenterX);
 			offZ = -(float) (minecraft.player.getZ() - mapCenterZ);
-			guiGraphics.pose().translate(offX / mapScale.get(), offZ / mapScale.get());
-			guiGraphics.blit(RenderPipelines.GUI_TEXTURED, texLocation, 0, 0, 0, 0, pixels.getWidth(), pixels.getHeight(), pixels.getWidth(), pixels.getHeight());
-			guiGraphics.pose().popMatrix();
+			guiGraphics.pose().translate(offX / mapScale.get(), offZ / mapScale.get(), 0);
+			guiGraphics.blit(texLocation, 0, 0, 0, 0, pixels.getWidth(), pixels.getHeight(), pixels.getWidth(), pixels.getHeight());
+			guiGraphics.pose().popPose();
 			guiGraphics.disableScissor();
 		}
 
@@ -140,57 +141,57 @@ public class Minimap {
 			renderMapWaypoints(guiGraphics);
 		}
 
-		guiGraphics.pose().pushMatrix();
-		guiGraphics.pose().translate(x + radius, y + radius);
+		guiGraphics.pose().pushPose();
+		guiGraphics.pose().translate(x + radius, y + radius, 0);
 		if (lockMapToNorth.get()) {
-			guiGraphics.pose().rotate((float) (((minecraft.player.getVisualRotationYInDegrees() + 180) / 180) * Math.PI));
+			guiGraphics.pose().last().pose().rotate((float) (((minecraft.player.getVisualRotationYInDegrees() + 180) / 180) * Math.PI), 0, 0, 1);
 		}
-		guiGraphics.pose().scale(0.5f * arrowScale.get(), 0.5f * arrowScale.get());
+		guiGraphics.pose().scale(0.5f * arrowScale.get(), 0.5f * arrowScale.get(), 1);
 		int arrowSize = 15;
-		guiGraphics.pose().translate(-arrowSize / 2f, -arrowSize / 2f);
-		guiGraphics.blitSprite(RenderPipelines.GUI_TEXTURED, arrowLocation, 0, 0, arrowSize, arrowSize);
-		guiGraphics.pose().popMatrix();
+		guiGraphics.pose().translate(-arrowSize / 2f, -arrowSize / 2f, 0);
+		guiGraphics.blitSprite(arrowLocation, 0, 0, arrowSize, arrowSize);
+		guiGraphics.pose().popPose();
 
-		guiGraphics.pose().popMatrix();
+		guiGraphics.pose().popPose();
 	}
 
 	private void renderMapWaypoints(GuiGraphics graphics) {
 		if (!AxolotlClientWaypoints.renderWaypoints.get()) return;
-		graphics.pose().pushMatrix();
-		Vector2f pos = new Vector2f();
+		graphics.pose().pushPose();
+		Vector3f pos = new Vector3f();
 		for (Waypoint waypoint : AxolotlClientWaypoints.getCurrentWaypoints()) {
-			graphics.pose().pushMatrix();
+			graphics.pose().pushPose();
 			float posX = (float) (waypoint.x() - minecraft.player.getX());
 			float posY = (float) (waypoint.z() - minecraft.player.getZ());
 
 			{
 				pos.zero();
-				graphics.pose().pushMatrix();
-				graphics.pose().translate(x, y);
-				graphics.pose().translate(radius, radius);
-				graphics.pose().scale((float) Math.sqrt(2), (float) Math.sqrt(2));
-				graphics.pose().scale(mapScale.get(), mapScale.get());
+				graphics.pose().pushPose();
+				graphics.pose().translate(x, y, 0);
+				graphics.pose().translate(radius, radius, 0);
+				graphics.pose().scale((float) Math.sqrt(2), (float) Math.sqrt(2), 1);
+				graphics.pose().scale(mapScale.get(), mapScale.get(), 1);
 				if (!lockMapToNorth.get()) {
-					graphics.pose().rotate((float) -Math.toRadians(minecraft.player.getVisualRotationYInDegrees() + 180));
+					graphics.pose().last().pose().rotate((float) -Math.toRadians(minecraft.player.getVisualRotationYInDegrees() + 180), 0, 0, 1);
 				}
-				graphics.pose().translate(posX, posY);
-				graphics.pose().transformPosition(pos);
-				graphics.pose().popMatrix();
+				graphics.pose().translate(posX, posY, 1);
+				graphics.pose().last().pose().transformPosition(pos);
+				graphics.pose().popPose();
 			}
 
 			{
 				pos.x = Mth.clamp(pos.x, x, x + size);
 				pos.y = Mth.clamp(pos.y, y, y + size);
-				graphics.pose().translate(pos);
+				graphics.pose().last().pose().translate(pos);
 			}
 
 			int textWidth = minecraft.font.width(waypoint.display());
 			int textHeight = minecraft.font.lineHeight;
 			graphics.fill(-(textWidth / 2) - Waypoint.displayXOffset(), -(textHeight / 2) - Waypoint.displayYOffset(), (textWidth / 2) + Waypoint.displayXOffset(), (textHeight / 2) + Waypoint.displayYOffset(), waypoint.color().toInt());
 			graphics.drawString(minecraft.font, waypoint.display(), -(textWidth / 2), -textHeight / 2, -1, false);
-			graphics.pose().popMatrix();
+			graphics.pose().popPose();
 		}
-		graphics.pose().popMatrix();
+		graphics.pose().popPose();
 	}
 
 	public void updateMapView() {
@@ -220,10 +221,10 @@ public class Minimap {
 		} else if (surface + 1 <= minecraft.player.getBlockY()) {
 			atSurface = true;
 		} else {
-			while (solidBlocksAbovePlayer <= 3 && surface > minecraft.player.getBlockY() && surface > level.getMinY()) {
+			while (solidBlocksAbovePlayer <= 3 && surface > minecraft.player.getBlockY() && surface > level.getMinBuildHeight()) {
 				BlockState state = centerChunk.getBlockState(mutableBlockPos);
 				mutableBlockPos.setY(surface--);
-				if (!(state.propagatesSkylightDown() || !state.canOcclude() || !state.isViewBlocking(level, mutableBlockPos))) {
+				if (!(state.propagatesSkylightDown(level, mutableBlockPos.below()) || !state.canOcclude() || !state.isViewBlocking(level, mutableBlockPos))) {
 					solidBlocksAbovePlayer++;
 				}
 			}
@@ -249,15 +250,15 @@ public class Minimap {
 						y = Math.min(y, minecraft.player.getBlockY());
 					}
 					BlockState blockState;
-					if (y <= level.getMinY()) {
+					if (y <= level.getMinBuildHeight()) {
 						blockState = Blocks.AIR.defaultBlockState();
 					} else {
 						do {
 							mutableBlockPos.setY(--y);
 							blockState = levelChunk.getBlockState(mutableBlockPos);
-						} while (blockState.getMapColor(level, mutableBlockPos) == MapColor.NONE && y > level.getMinY());
+						} while (blockState.getMapColor(level, mutableBlockPos) == MapColor.NONE && y > level.getMinBuildHeight());
 
-						if (y > level.getMinY() && !blockState.getFluidState().isEmpty()) {
+						if (y > level.getMinBuildHeight() && !blockState.getFluidState().isEmpty()) {
 							int highestFullBlockY = y - 1;
 							mutableBlockPos2.set(mutableBlockPos);
 
@@ -266,7 +267,7 @@ public class Minimap {
 								mutableBlockPos2.setY(highestFullBlockY--);
 								blockState2 = levelChunk.getBlockState(mutableBlockPos2);
 								fluidDepth++;
-							} while (highestFullBlockY > level.getMinY() && !blockState2.getFluidState().isEmpty());
+							} while (highestFullBlockY > level.getMinBuildHeight() && !blockState2.getFluidState().isEmpty());
 
 							FluidState fluidState = blockState.getFluidState();
 							blockState = !fluidState.isEmpty() && !blockState.isFaceSturdy(level, mutableBlockPos, Direction.UP) ? fluidState.createLegacyBlock() : blockState;
@@ -299,25 +300,26 @@ public class Minimap {
 
 					d = e;
 
-					if (useTextureSampling.get()) {
+					/*if (useTextureSampling.get()) {
 						final int fz = z, fx = x;
 						futs.add(TextureSampler.getSample(blockState, level, mutableBlockPos, brightness).thenAccept(color -> {
-							color = ARGB.opaque(color);
-							if (fz >= 0 && pixels.getPixel(fx, fz) != color) {
-								pixels.setPixel(fx, fz, color);
+							color = FastColor.ARGB32.opaque(color);
+							if (fz >= 0 && Integer.rotateRight(pixels.getPixelRGBA(fx, fz), 4) != color) {
+								pixels.setPixelRGBA(fx, fz, Integer.rotateLeft(color, 4));
 								updated.set(true);
 							}
 						}));
-					} else {
-						int color = mapColor.calculateARGBColor(brightness);
-						if (z >= 0 && pixels.getPixel(x, z) != color) {
-							pixels.setPixel(x, z, ARGB.opaque(color));
+					} else*/
+					{
+						int color = mapColor.calculateRGBColor(brightness);
+						if (z >= 0 && Integer.rotateRight(pixels.getPixelRGBA(x, z), 4) != color) {
+							pixels.setPixelRGBA(x, z, FastColor.ARGB32.opaque(color));
 							updated.set(true);
 						}
 					}
 				} else {
-					if (z >= 0 && pixels.getPixel(x, z) != 0) {
-						pixels.setPixel(x, z, ARGB.opaque(0));
+					if (z >= 0 && Integer.rotateRight(pixels.getPixelRGBA(x, z), 4) != 0) {
+						pixels.setPixelRGBA(x, z, FastColor.ARGB32.opaque(0));
 						updated.set(true);
 					}
 				}

@@ -22,38 +22,8 @@
 
 package io.github.axolotlclient.waypoints.map;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.function.Supplier;
-
-import com.mojang.blaze3d.buffers.GpuBuffer;
-import com.mojang.blaze3d.platform.NativeImage;
-import com.mojang.blaze3d.systems.CommandEncoder;
-import com.mojang.blaze3d.systems.RenderSystem;
-import io.github.axolotlclient.waypoints.AxolotlClientWaypoints;
-import io.github.axolotlclient.waypoints.util.ARGB;
-import it.unimi.dsi.fastutil.objects.Object2IntMap;
-import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
-import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
-import net.fabricmc.fabric.api.resource.SimpleSynchronousResourceReloadListener;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.block.model.BlockStateModel;
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.packs.PackType;
-import net.minecraft.server.packs.resources.ResourceManager;
-import net.minecraft.tags.FluidTags;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.material.MapColor;
-
 public class TextureSampler {
-	private static final Minecraft minecraft = Minecraft.getInstance();
+	/*private static final Minecraft minecraft = Minecraft.getInstance();
 
 	private static final Object2IntMap<BlockState> sampleCache = new Object2IntOpenHashMap<>();
 	private static final Object2ObjectMap<ResourceLocation, NativeImage> atlasCache = new Object2ObjectOpenHashMap<>();
@@ -100,8 +70,8 @@ public class TextureSampler {
 				sampling = false;
 				return CompletableFuture.completedFuture(applyTransforms(cached, state, level, pos, brightness));
 			}
-			BlockStateModel model = minecraft.getModelManager().getBlockModelShaper().getBlockModel(state);
-			var tex = model.particleIcon();
+			BakedModel model = minecraft.getModelManager().getBlockModelShaper().getBlockModel(state);
+			var tex = model.getParticleIcon();
 			return downloadAtlas(tex.atlasLocation()).thenApply(i -> sampleSprite(i, tex))
 				.thenApply(x -> {
 					sampleCache.put(state, (int) x);
@@ -156,6 +126,7 @@ public class TextureSampler {
 		RenderSystem.assertOnRenderThread();
 		var cf = new CompletableFuture<NativeImage>();
 
+		minecraft.getTextureManager().getTexture(loc).
 		var gpuTexture = minecraft.getTextureManager().getTexture(loc).getTexture();
 		int bufferSize = gpuTexture.getFormat().pixelSize() * gpuTexture.getWidth(0) * gpuTexture.getHeight(0);
 
@@ -204,5 +175,5 @@ public class TextureSampler {
 		} else {
 			return ARGB.average(a, b);
 		}
-	}
+	}*/
 }

@@ -3,8 +3,12 @@ plugins {
 	id("io.github.p03w.machete")
 }
 
+val minecraftVersion = "1.21.1"
+val minecraftFriendly = "1.21.1"
+val fapiVersion = "0.116.4"
+
 group = project.property("maven_group") as String
-version = "${project.property("version")}+${project.property("minecraft_121")}"
+version = "${project.property("version")}+$minecraftVersion"
 base.archivesName = project.property("archives_base_name").toString()
 
 loom {
@@ -20,7 +24,7 @@ loom {
 }
 
 dependencies {
-	minecraft("com.mojang:minecraft:${project.property("minecraft_121")}")
+	minecraft("com.mojang:minecraft:${minecraftVersion}")
 	mappings(loom.layered {
 		officialMojangMappings {
 			nameSyntheticMembers = true
@@ -30,13 +34,10 @@ dependencies {
 
 	modImplementation("net.fabricmc:fabric-loader:${project.property("fabric_loader")}")
 
-	modImplementation("net.fabricmc.fabric-api:fabric-api:${project.property("fapi_121")}+${project.property("minecraft_121")}")
+	modImplementation("net.fabricmc.fabric-api:fabric-api:${fapiVersion}+${minecraftFriendly}")
 
-	modImplementation("io.github.axolotlclient:AxolotlClient-config:${project.property("config")}+${project.property("minecraft_121")}") {
-		exclude(group = "com.terraformersmc")
-		exclude(group = "org.lwjgl")
-	}
-	include("io.github.axolotlclient:AxolotlClient-config:${project.property("config")}+${project.property("minecraft_121")}")
+	modImplementation("io.github.axolotlclient:AxolotlClient-config:${project.property("config")}+${minecraftFriendly}")
+	include("io.github.axolotlclient:AxolotlClient-config:${project.property("config")}+${minecraftFriendly}")
 	modImplementation("io.github.axolotlclient.AxolotlClient-config:AxolotlClientConfig-common:${project.property("config")}")
 
 	modCompileOnlyApi("com.terraformersmc:modmenu:8.0.0") {
@@ -80,6 +81,7 @@ java {
 
 tasks.runClient {
 	classpath(sourceSets.getByName("test").runtimeClasspath)
+	jvmArgs("-XX:+AllowEnhancedClassRedefinition -XX:HotswapAgent=fatjar")
 }
 
 // Configure the maven publication

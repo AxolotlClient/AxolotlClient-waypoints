@@ -22,19 +22,11 @@
 
 package io.github.axolotlclient.waypoints.mixin;
 
-import net.minecraft.client.Camera;
-import net.minecraft.client.renderer.CachedPerspectiveProjectionMatrixBuffer;
-import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.client.renderer.LevelRenderer;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.gen.Accessor;
-import org.spongepowered.asm.mixin.gen.Invoker;
 
-@Mixin(GameRenderer.class)
-public interface GameRendererAccessor {
+@Mixin(LevelRenderer.class)
+public interface LevelRendererAccessor {
 
-	@Accessor("hud3dProjectionMatrixBuffer")
-	CachedPerspectiveProjectionMatrixBuffer getHud3dProjectionMatrixBuffer();
 
-	@Invoker("getFov")
-	float invokeGetFov(Camera mainCamera, float f, boolean b);
 }

@@ -22,19 +22,19 @@
 
 package io.github.axolotlclient.waypoints.mixin;
 
-import net.minecraft.client.Camera;
-import net.minecraft.client.renderer.CachedPerspectiveProjectionMatrixBuffer;
-import net.minecraft.client.renderer.GameRenderer;
+import io.github.axolotlclient.waypoints.map.WorldMapScreen;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.world.level.ChunkPos;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.gen.Accessor;
-import org.spongepowered.asm.mixin.gen.Invoker;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Mixin(GameRenderer.class)
-public interface GameRendererAccessor {
+@Mixin(ClientLevel.class)
+public class ClientLevelMixin {
 
-	@Accessor("hud3dProjectionMatrixBuffer")
-	CachedPerspectiveProjectionMatrixBuffer getHud3dProjectionMatrixBuffer();
-
-	@Invoker("getFov")
-	float invokeGetFov(Camera mainCamera, float f, boolean b);
+	@Inject(method = "onChunkLoaded", at = @At("TAIL"))
+	private void onChunkLoaded(ChunkPos chunkPos, CallbackInfo ci) {
+		WorldMapScreen.saveLoadedChunkTile(chunkPos);
+	}
 }

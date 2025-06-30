@@ -28,11 +28,19 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.Map;
+import java.util.function.IntFunction;
 import java.util.stream.Collectors;
 
+import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufInputStream;
 import io.netty.buffer.Unpooled;
+import it.unimi.dsi.fastutil.objects.Object2IntArrayMap;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import net.minecraft.Util;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.util.ByIdMap;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.LevelChunk;
@@ -51,7 +59,7 @@ public class LevelChunkStorage {
 		}
 
 		public void write(Path path) throws IOException {
-			
+
 			var buf = buffer();
 			write(buf);
 			Files.copy(new ByteBufInputStream(buf), path, StandardCopyOption.REPLACE_EXISTING);
@@ -75,13 +83,27 @@ public class LevelChunkStorage {
 		return new FriendlyByteBuf(Unpooled.buffer());
 	}
 
+	private static final Object2IntMap<Heightmap.Types> IDS = Util.make(() -> {
+		Object2IntMap<Heightmap.Types> map = new Object2IntArrayMap<>(5);
+		map.put(Heightmap.Types.WORLD_SURFACE_WG, 0);
+		map.put(Heightmap.Types.WORLD_SURFACE, 1);
+		map.put(Heightmap.Types.OCEAN_FLOOR_WG, 2);
+		map.put(Heightmap.Types.OCEAN_FLOOR, 3);
+		map.put(Heightmap.Types.MOTION_BLOCKING, 4);
+		map.put(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, 5);
+		return map;
+	});
+
+	private static final IntFunction<Heightmap.Types> BY_ID = ByIdMap.continuous(IDS::getInt, Heightmap.Types.values(), ByIdMap.OutOfBoundsStrategy.ZERO);
+	public static final StreamCodec<ByteBuf, Heightmap.Types> STREAM_CODEC = ByteBufCodecs.idMapper(BY_ID, IDS::getInt);
+
 	public static void write(ChunkAccess chunk, FriendlyByteBuf buf) {
 		buf.writeChunkPos(chunk.getPos());
 		var heightmaps = chunk.getHeightmaps()
 			.stream()
 			.filter(entryx -> entryx.getKey().sendToClient())
 			.collect(Collectors.toMap(Map.Entry::getKey, entryx -> entryx.getValue().getRawData().clone()));
-		buf.writeMap(heightmaps, Heightmap.Types.STREAM_CODEC, (b, v) -> b.writeLongArray(v));
+		buf.writeMap(heightmaps, STREAM_CODEC, FriendlyByteBuf::writeLongArray);
 
 		buf.writeInt(chunk.getSections().length);
 		for (LevelChunkSection section : chunk.getSections()) {
@@ -94,7 +116,7 @@ public class LevelChunkStorage {
 
 	public static LevelChunk read(Level level, FriendlyByteBuf buf) {
 		var pos = buf.readChunkPos();
-		var heightmaps = buf.readMap(Heightmap.Types.STREAM_CODEC, b -> b.readLongArray());
+		var heightmaps = buf.readMap(STREAM_CODEC, FriendlyByteBuf::readLongArray);
 
 		var chunk = new LevelChunk(level, pos);
 		int sectionCount = buf.readInt();

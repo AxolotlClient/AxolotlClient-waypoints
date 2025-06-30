@@ -22,19 +22,22 @@
 
 package io.github.axolotlclient.waypoints.mixin;
 
-import net.minecraft.client.Camera;
-import net.minecraft.client.renderer.CachedPerspectiveProjectionMatrixBuffer;
-import net.minecraft.client.renderer.GameRenderer;
+import java.nio.file.Path;
+
+import io.github.axolotlclient.waypoints.AxolotlClientWaypoints;
+import io.github.axolotlclient.waypoints.AxolotlClientWaypointsCommon;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.gen.Accessor;
-import org.spongepowered.asm.mixin.gen.Invoker;
+import org.spongepowered.asm.mixin.Overwrite;
 
-@Mixin(GameRenderer.class)
-public interface GameRendererAccessor {
+@Mixin(value = AxolotlClientWaypointsCommon.class, remap = false)
+public class AxolotlClientWaypointsCommonMixin {
 
-	@Accessor("hud3dProjectionMatrixBuffer")
-	CachedPerspectiveProjectionMatrixBuffer getHud3dProjectionMatrixBuffer();
-
-	@Invoker("getFov")
-	float invokeGetFov(Camera mainCamera, float f, boolean b);
+	/**
+	 * @author moehreag
+	 * @reason implement cross-version access
+	 */
+	@Overwrite
+	public static Path getCurrentStorageDir() {
+		return AxolotlClientWaypoints.getCurrentStorageDir();
+	}
 }

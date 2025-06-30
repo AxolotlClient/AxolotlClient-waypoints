@@ -58,25 +58,25 @@ public class EditWaypointScreen extends Screen {
 	@Override
 	protected void init() {
 		if (!initialized) {
-			haFL.addTitleHeader(getTitle(), getFont());
+			haFL.addTitleHeader(getTitle(), font);
 			ColorOption color = new ColorOption("", toEdit.color().immutable());
 
 			var contents = haFL.addToContents(LinearLayout.vertical()).spacing(4);
-			contents.addChild(new StringWidget(AxolotlClientWaypoints.tr("waypoint_position"), getFont())).alignCenter().setWidth(haFL.getWidth());
+			contents.addChild(new StringWidget(AxolotlClientWaypoints.tr("waypoint_position"), font)).alignCenter().setWidth(haFL.getWidth());
 			var dimensionLine = contents.addChild(LinearLayout.horizontal()).spacing(4);
-			dimensionLine.addChild(new StringWidget(AxolotlClientWaypoints.tr("waypoint_position.world_label"), getFont())).setHeight(20);
-			var world = dimensionLine.addChild(new EditBox(getFont(), 150, 20, AxolotlClientWaypoints.tr("waypoint_position.world")));
+			dimensionLine.addChild(new StringWidget(AxolotlClientWaypoints.tr("waypoint_position.world_label"), font)).setHeight(20);
+			var world = dimensionLine.addChild(new EditBox(font, 150, 20, AxolotlClientWaypoints.tr("waypoint_position.world")));
 			world.setValue(toEdit.world());
-			dimensionLine.addChild(new StringWidget(AxolotlClientWaypoints.tr("waypoint_position.dimension"), getFont())).setHeight(20);
-			var dimension = dimensionLine.addChild(new EditBox(getFont(), 150, 20, AxolotlClientWaypoints.tr("waypoint_position_dimension")));
+			dimensionLine.addChild(new StringWidget(AxolotlClientWaypoints.tr("waypoint_position.dimension"), font)).setHeight(20);
+			var dimension = dimensionLine.addChild(new EditBox(font, 150, 20, AxolotlClientWaypoints.tr("waypoint_position_dimension")));
 			dimension.setValue(toEdit.dimension());
 			var positionLine = contents.addChild(LinearLayout.horizontal()).spacing(4);
-			positionLine.addChild(new StringWidget(AxolotlClientWaypoints.tr("waypoint_position.x_label"), getFont())).setHeight(20);
-			var x = positionLine.addChild(new EditBox(getFont(), 75, 20, AxolotlClientWaypoints.tr("waypoint_position.x")));
-			positionLine.addChild(new StringWidget(AxolotlClientWaypoints.tr("waypoint_position.y_label"), getFont())).setHeight(20);
-			var y = positionLine.addChild(new EditBox(getFont(), 75, 20, AxolotlClientWaypoints.tr("waypoint_position.y")));
-			positionLine.addChild(new StringWidget(AxolotlClientWaypoints.tr("waypoint_position.z_label"), getFont())).setHeight(20);
-			var z = positionLine.addChild(new EditBox(getFont(), 75, 20, AxolotlClientWaypoints.tr("waypoint_position.z")));
+			positionLine.addChild(new StringWidget(AxolotlClientWaypoints.tr("waypoint_position.x_label"), font)).setHeight(20);
+			var x = positionLine.addChild(new EditBox(font, 75, 20, AxolotlClientWaypoints.tr("waypoint_position.x")));
+			positionLine.addChild(new StringWidget(AxolotlClientWaypoints.tr("waypoint_position.y_label"), font)).setHeight(20);
+			var y = positionLine.addChild(new EditBox(font, 75, 20, AxolotlClientWaypoints.tr("waypoint_position.y")));
+			positionLine.addChild(new StringWidget(AxolotlClientWaypoints.tr("waypoint_position.z_label"), font)).setHeight(20);
+			var z = positionLine.addChild(new EditBox(font, 75, 20, AxolotlClientWaypoints.tr("waypoint_position.z")));
 			x.setResponder(s -> {
 				try {
 					this.x = Double.parseDouble(s);
@@ -103,12 +103,12 @@ public class EditWaypointScreen extends Screen {
 			z.setValue(String.valueOf(toEdit.z()));
 			contents.addChild(SpacerElement.height(10));
 
-			contents.addChild(new StringWidget(AxolotlClientWaypoints.tr("waypoint_display"), getFont())).alignCenter().setWidth(haFL.getWidth());
+			contents.addChild(new StringWidget(AxolotlClientWaypoints.tr("waypoint_display"), font)).alignCenter().setWidth(haFL.getWidth());
 			var nameLine = contents.addChild(LinearLayout.horizontal()).spacing(4);
-			nameLine.addChild(new StringWidget(AxolotlClientWaypoints.tr("waypoint_display.name_label"), getFont())).setHeight(20);
-			var name = nameLine.addChild(new EditBox(getFont(), 100, 20, AxolotlClientWaypoints.tr("waypoint_display.name")));
-			nameLine.addChild(new StringWidget(AxolotlClientWaypoints.tr("waypoint_display.display_label"), getFont())).setHeight(20);
-			var display = nameLine.addChild(new EditBox(getFont(), 50, 20, AxolotlClientWaypoints.tr("waypoint_display.display")));
+			nameLine.addChild(new StringWidget(AxolotlClientWaypoints.tr("waypoint_display.name_label"), font)).setHeight(20);
+			var name = nameLine.addChild(new EditBox(font, 100, 20, AxolotlClientWaypoints.tr("waypoint_display.name")));
+			nameLine.addChild(new StringWidget(AxolotlClientWaypoints.tr("waypoint_display.display_label"), font)).setHeight(20);
+			var display = nameLine.addChild(new EditBox(font, 50, 20, AxolotlClientWaypoints.tr("waypoint_display.display")));
 			var lockButton = nameLine.addChild(CycleButton.onOffBuilder(true).create(AxolotlClientWaypoints.tr("waypoint_display.unlock_display"), (btn, v) -> {
 				display.active = !v;
 			}));
@@ -126,7 +126,7 @@ public class EditWaypointScreen extends Screen {
 			display.setMaxLength(10);
 			contents.addChild(SpacerElement.height(10));
 
-			contents.addChild(new StringWidget(AxolotlClientWaypoints.tr("waypoint_color"), getFont())).alignCenter().setWidth(haFL.getWidth());
+			contents.addChild(new StringWidget(AxolotlClientWaypoints.tr("waypoint_color"), font)).alignCenter().setWidth(haFL.getWidth());
 			var colorLine = contents.addChild(LinearLayout.horizontal()).spacing(4);
 			colorLine.addChild(new AbstractWidget(0, 0, 100, 20, Component.empty()) {
 				@Override

@@ -77,37 +77,37 @@ public class CreateWaypointScreen extends Screen {
 			boolean singleplayer = minecraft.getSingleplayerServer() != null;
 			ColorOption color = new ColorOption("", Colors.GREEN.withAlpha(127));
 
-			haFL.addTitleHeader(getTitle(), getFont());
+			haFL.addTitleHeader(getTitle(), font);
 
 			var contents = haFL.addToContents(LinearLayout.vertical()).spacing(4);
-			contents.addChild(new StringWidget(AxolotlClientWaypoints.tr("waypoint_position"), getFont())).alignCenter().setWidth(haFL.getWidth());
+			contents.addChild(new StringWidget(AxolotlClientWaypoints.tr("waypoint_position"), font)).alignCenter().setWidth(haFL.getWidth());
 			var dimensionLine = contents.addChild(LinearLayout.horizontal()).spacing(4);
-			dimensionLine.addChild(new StringWidget(AxolotlClientWaypoints.tr("waypoint_position.world_label"), getFont())).setHeight(20);
-			var world = dimensionLine.addChild(new EditBox(getFont(), 150, 20, AxolotlClientWaypoints.tr("waypoint_position.world")));
+			dimensionLine.addChild(new StringWidget(AxolotlClientWaypoints.tr("waypoint_position.world_label"), font)).setHeight(20);
+			var world = dimensionLine.addChild(new EditBox(font, 150, 20, AxolotlClientWaypoints.tr("waypoint_position.world")));
 			if (singleplayer) {
 				world.setValue(((MinecraftServerAccessor) minecraft.getSingleplayerServer()).getStorageSource().getLevelId());
 			} else {
 				world.setValue(minecraft.getCurrentServer().ip);
 			}
 			world.active = false;
-			dimensionLine.addChild(new StringWidget(AxolotlClientWaypoints.tr("waypoint_position.dimension"), getFont())).setHeight(20);
+			dimensionLine.addChild(new StringWidget(AxolotlClientWaypoints.tr("waypoint_position.dimension"), font)).setHeight(20);
 			Supplier<String> dimensionSupplier;
 			if (singleplayer) {
 				StringArrayOption dimensions = new StringArrayOption("", minecraft.getSingleplayerServer().levelKeys().stream().map(k -> k.location().toString()).toArray(String[]::new), minecraft.level.dimension().location().toString());
 				dimensionLine.addChild(new StringArrayWidget(0, 0, 150, 20, dimensions));
 				dimensionSupplier = dimensions::get;
 			} else {
-				var dimension = dimensionLine.addChild(new EditBox(getFont(), 150, 20, AxolotlClientWaypoints.tr("waypoint_position_dimension")));
+				var dimension = dimensionLine.addChild(new EditBox(font, 150, 20, AxolotlClientWaypoints.tr("waypoint_position_dimension")));
 				dimension.setValue(minecraft.level.dimension().location().toString());
 				dimensionSupplier = dimension::getValue;
 			}
 			var positionLine = contents.addChild(LinearLayout.horizontal()).spacing(4);
-			positionLine.addChild(new StringWidget(AxolotlClientWaypoints.tr("waypoint_position.x_label"), getFont())).setHeight(20);
-			var x = positionLine.addChild(new EditBox(getFont(), 75, 20, AxolotlClientWaypoints.tr("waypoint_position.x")));
-			positionLine.addChild(new StringWidget(AxolotlClientWaypoints.tr("waypoint_position.y_label"), getFont())).setHeight(20);
-			var y = positionLine.addChild(new EditBox(getFont(), 75, 20, AxolotlClientWaypoints.tr("waypoint_position.y")));
-			positionLine.addChild(new StringWidget(AxolotlClientWaypoints.tr("waypoint_position.z_label"), getFont())).setHeight(20);
-			var z = positionLine.addChild(new EditBox(getFont(), 75, 20, AxolotlClientWaypoints.tr("waypoint_position.z")));
+			positionLine.addChild(new StringWidget(AxolotlClientWaypoints.tr("waypoint_position.x_label"), font)).setHeight(20);
+			var x = positionLine.addChild(new EditBox(font, 75, 20, AxolotlClientWaypoints.tr("waypoint_position.x")));
+			positionLine.addChild(new StringWidget(AxolotlClientWaypoints.tr("waypoint_position.y_label"), font)).setHeight(20);
+			var y = positionLine.addChild(new EditBox(font, 75, 20, AxolotlClientWaypoints.tr("waypoint_position.y")));
+			positionLine.addChild(new StringWidget(AxolotlClientWaypoints.tr("waypoint_position.z_label"), font)).setHeight(20);
+			var z = positionLine.addChild(new EditBox(font, 75, 20, AxolotlClientWaypoints.tr("waypoint_position.z")));
 			x.setResponder(s -> {
 				try {
 					this.x = Double.parseDouble(s);
@@ -134,12 +134,12 @@ public class CreateWaypointScreen extends Screen {
 			z.setValue("%.2f".formatted(this.z));
 			contents.addChild(SpacerElement.height(10));
 
-			contents.addChild(new StringWidget(AxolotlClientWaypoints.tr("waypoint_display"), getFont())).alignCenter().setWidth(haFL.getWidth());
+			contents.addChild(new StringWidget(AxolotlClientWaypoints.tr("waypoint_display"), font)).alignCenter().setWidth(haFL.getWidth());
 			var nameLine = contents.addChild(LinearLayout.horizontal()).spacing(4);
-			nameLine.addChild(new StringWidget(AxolotlClientWaypoints.tr("waypoint_display.name_label"), getFont())).setHeight(20);
-			var name = nameLine.addChild(new EditBox(getFont(), 100, 20, AxolotlClientWaypoints.tr("waypoint_display.name")));
-			nameLine.addChild(new StringWidget(AxolotlClientWaypoints.tr("waypoint_display.display_label"), getFont())).setHeight(20);
-			var display = nameLine.addChild(new EditBox(getFont(), 50, 20, AxolotlClientWaypoints.tr("waypoint_display.display")));
+			nameLine.addChild(new StringWidget(AxolotlClientWaypoints.tr("waypoint_display.name_label"), font)).setHeight(20);
+			var name = nameLine.addChild(new EditBox(font, 100, 20, AxolotlClientWaypoints.tr("waypoint_display.name")));
+			nameLine.addChild(new StringWidget(AxolotlClientWaypoints.tr("waypoint_display.display_label"), font)).setHeight(20);
+			var display = nameLine.addChild(new EditBox(font, 50, 20, AxolotlClientWaypoints.tr("waypoint_display.display")));
 			var lockButton = nameLine.addChild(CycleButton.onOffBuilder(true)
 				.create(AxolotlClientWaypoints.tr("waypoint_display.unlock_display"),
 					(btn, v) -> display.active = !v));
@@ -156,7 +156,7 @@ public class CreateWaypointScreen extends Screen {
 			display.setMaxLength(10);
 			contents.addChild(SpacerElement.height(10));
 
-			contents.addChild(new StringWidget(AxolotlClientWaypoints.tr("waypoint_color"), getFont())).alignCenter().setWidth(haFL.getWidth());
+			contents.addChild(new StringWidget(AxolotlClientWaypoints.tr("waypoint_color"), font)).alignCenter().setWidth(haFL.getWidth());
 			var colorLine = contents.addChild(LinearLayout.horizontal()).spacing(4);
 			colorLine.addChild(new AbstractWidget(0, 0, 100, 20, Component.empty()) {
 				@Override

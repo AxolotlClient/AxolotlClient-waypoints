@@ -24,9 +24,6 @@
 	"entrypoints": {
 		"client": [
 			"io.github.axolotlclient.waypoints.AxolotlClientWaypoints"
-		],
-		"modmenu": [
-			"io.github.axolotlclient.config.modmenu.ModMenuCompat"
 		]
 	},
 	"mixins": [

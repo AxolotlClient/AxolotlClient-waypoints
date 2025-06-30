@@ -1,6 +1,6 @@
 {
 	"schemaVersion": 1,
-	"id": "axolotlclient",
+	"id": "axolotlclient-waypoints",
 	"version": "${version}",
 	"name": "AxolotlClient",
 	"description": "Free & Open-Source Minecraft Mod for use in PvP and other Scenarios",
@@ -15,7 +15,7 @@
 	],
 	"contact": {
 		"homepage": "https://axolotlclient.github.io/",
-		"sources": "https://github.com/AxolotlClient/AxolotlClient-mod/tree/1.8.9"
+		"sources": "https://github.com/AxolotlClient/AxolotlClient-waypoints/"
 	},
 	"license": "LGPL-3.0-or-later",
 	"icon": "assets/axolotlclient/icon.png",
@@ -23,13 +23,7 @@
 	"environment": "client",
 	"entrypoints": {
 		"client": [
-			"io.github.axolotlclient.AxolotlClient"
-		],
-		"modmenu": [
-			"io.github.axolotlclient.config.modmenu.ModMenuCompat"
-		],
-		"worldhost": [
-			"io.github.axolotlclient.api.worldhost.AxolotlClientWorldHostPlugin"
+			"io.github.axolotlclient.waypoints.AxolotlClientWaypoints"
 		]
 	},
 	"mixins": [
@@ -40,9 +34,8 @@
 	},
 	"depends": {
 		"fabricloader": ">=0.15.11",
-		"minecraft": "1.21.1",
+		"minecraft": "<=1.21.1 >=1.21",
 		"fabric-api": "*",
-		"axolotlclientconfig": "*",
-		"axolotlclient-common": "*"
+		"axolotlclientconfig": "*"
 	}
 }

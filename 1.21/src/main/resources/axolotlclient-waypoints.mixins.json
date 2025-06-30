@@ -1,9 +1,17 @@
 {
 	"required": true,
-	"package": "io.github.axolotlclient.mixin",
+	"package": "io.github.axolotlclient.waypoints.mixin",
 	"compatibilityLevel": "JAVA_21",
 	"client": [
-
+		"AxolotlClientWaypointsCommonMixin",
+		"ClientLevelMixin",
+		"ClientPacketListenerMixin",
+		"DebugOverlayMixin",
+		"GameRendererAccessor",
+		"GameRendererMixin",
+		"GuiMixin",
+		"LevelRendererAccessor",
+		"MinecraftServerAccessor"
 	],
 	"injectors": {
 		"defaultRequire": 1

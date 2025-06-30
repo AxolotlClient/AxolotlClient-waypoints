@@ -22,19 +22,24 @@
 
 package io.github.axolotlclient.waypoints.mixin;
 
-import net.minecraft.client.Camera;
-import net.minecraft.client.renderer.CachedPerspectiveProjectionMatrixBuffer;
-import net.minecraft.client.renderer.GameRenderer;
+import io.github.axolotlclient.waypoints.AxolotlClientWaypoints;
+import net.minecraft.client.multiplayer.ClientPacketListener;
+import net.minecraft.network.protocol.game.ClientboundLoginPacket;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.gen.Accessor;
-import org.spongepowered.asm.mixin.gen.Invoker;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Mixin(GameRenderer.class)
-public interface GameRendererAccessor {
+@Mixin(ClientPacketListener.class)
+public class ClientPacketListenerMixin {
 
-	@Accessor("hud3dProjectionMatrixBuffer")
-	CachedPerspectiveProjectionMatrixBuffer getHud3dProjectionMatrixBuffer();
+	@Inject(method = "handleLogin", at = @At("TAIL"))
+	private void onLogin(ClientboundLoginPacket packet, CallbackInfo ci) {
+		AxolotlClientWaypoints.WAYPOINT_STORAGE.load();
+	}
 
-	@Invoker("getFov")
-	float invokeGetFov(Camera mainCamera, float f, boolean b);
+	@Inject(method = "clearLevel", at = @At("TAIL"))
+	private void onClearLevel(CallbackInfo ci) {
+		AxolotlClientWaypoints.WAYPOINT_STORAGE.save();
+	}
 }

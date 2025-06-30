@@ -38,7 +38,6 @@ import io.github.axolotlclient.AxolotlClientConfig.api.util.Colors;
 import io.github.axolotlclient.waypoints.AxolotlClientWaypoints;
 import io.github.axolotlclient.waypoints.map.util.LevelChunkStorage;
 import io.github.axolotlclient.waypoints.map.widgets.DropdownButton;
-import io.github.axolotlclient.waypoints.util.ARGB;
 import io.github.axolotlclient.waypoints.waypoints.Waypoint;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -51,13 +50,13 @@ import net.minecraft.client.gui.components.AbstractSliderButton;
 import net.minecraft.client.gui.components.ImageButton;
 import net.minecraft.client.gui.components.WidgetSprites;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.SectionPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.FastColor;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
@@ -69,8 +68,8 @@ import net.minecraft.world.level.chunk.status.ChunkStatus;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.material.MapColor;
-import org.joml.Vector2f;
 import org.joml.Vector2i;
+import org.joml.Vector3f;
 
 @SuppressWarnings({"DataFlowIssue", "ResultOfMethodCallIgnored"})
 @Slf4j
@@ -80,7 +79,7 @@ public class WorldMapScreen extends Screen {
 	private static final ResourceLocation OPTIONS_HOVERED_SPRITE = OPTIONS_SPRITE.withSuffix("_hovered");
 
 	private final Map<Vector2i, LazyTile> tiles = new ConcurrentHashMap<>();
-	private final Vector2f dragOffset = new Vector2f();
+	private final Vector3f dragOffset = new Vector3f();
 	private float scale = 1f;
 	private boolean atSurface;
 	private int caveY;
@@ -93,12 +92,13 @@ public class WorldMapScreen extends Screen {
 	}
 
 	@Override
-	public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-		guiGraphics.pose().pushMatrix();
-		guiGraphics.pose().translate(width / 2f, height / 2f);
-		guiGraphics.pose().translate(dragOffset);
-		guiGraphics.pose().pushMatrix();
-		guiGraphics.pose().scale(scale);
+	public void renderBackground(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+		super.renderBackground(guiGraphics, mouseX, mouseY, partialTick);
+		guiGraphics.pose().pushPose();
+		guiGraphics.pose().translate(width / 2f, height / 2f, 0);
+		guiGraphics.pose().last().pose().translate(dragOffset);
+		guiGraphics.pose().pushPose();
+		guiGraphics.pose().scale(scale, scale, 1);
 
 		var playerPos = minecraft.player.position();
 
@@ -106,22 +106,25 @@ public class WorldMapScreen extends Screen {
 			tile.render(guiGraphics, (float) playerPos.x(), (float) playerPos.z(), scale, partialTick, caveY, atSurface);
 		}
 
-		guiGraphics.pose().popMatrix();
+		guiGraphics.pose().popPose();
 		renderMapWaypoints(guiGraphics, mouseX, mouseY);
 
-		guiGraphics.pose().rotate((float) (((minecraft.player.getVisualRotationYInDegrees() + 180) / 180) * Math.PI));
-		guiGraphics.pose().scale(0.5f * Minimap.arrowScale.get(), 0.5f * Minimap.arrowScale.get());
+		guiGraphics.pose().last().pose().rotate((float) (((minecraft.player.getVisualRotationYInDegrees() + 180) / 180) * Math.PI), 0, 0, 1);
+		guiGraphics.pose().scale(0.5f * Minimap.arrowScale.get(), 0.5f * Minimap.arrowScale.get(), 1);
 		int arrowSize = 15;
-		guiGraphics.pose().translate(-arrowSize / 2f, -arrowSize / 2f);
-		guiGraphics.blitSprite(RenderPipelines.GUI_TEXTURED, Minimap.arrowLocation, 0, 0, arrowSize, arrowSize);
-		guiGraphics.pose().popMatrix();
+		guiGraphics.pose().translate(-arrowSize / 2f, -arrowSize / 2f, 0);
+		guiGraphics.blitSprite(Minimap.arrowLocation, 0, 0, arrowSize, arrowSize);
+		guiGraphics.pose().popPose();
+	}
 
+	@Override
+	public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
 		super.render(guiGraphics, mouseX, mouseY, partialTick);
 
 		if (mouseX > -1 && mouseY > -1) {
 			int x = getWorldX(mouseX);
 			int z = getWorldZ(mouseY);
-			guiGraphics.drawCenteredString(getFont(), AxolotlClientWaypoints.tr("position", String.valueOf(x), String.valueOf(getY(x, z)), String.valueOf(z)), width / 2, height - 15, Colors.GRAY.toInt());
+			guiGraphics.drawCenteredString(font, AxolotlClientWaypoints.tr("position", String.valueOf(x), String.valueOf(getY(x, z)), String.valueOf(z)), width / 2, height - 15, Colors.GRAY.toInt());
 		}
 	}
 
@@ -133,7 +136,7 @@ public class WorldMapScreen extends Screen {
 		if (tile == null || tile.tile == null) {
 			c = minecraft.level.getChunk(SectionPos.blockToSectionCoord(x), SectionPos.blockToSectionCoord(z), ChunkStatus.FULL, false);
 		} else c = tile.tile.chunk.chunk();
-		if (c == null) return minecraft.level.getMinY();
+		if (c == null) return minecraft.level.getMinBuildHeight();
 		int y = c.getHeight(Heightmap.Types.WORLD_SURFACE, x, z);
 		if (atSurface) {
 			return y;
@@ -144,7 +147,7 @@ public class WorldMapScreen extends Screen {
 		do {
 			mutableBlockPos.setY(--y);
 			blockState = c.getBlockState(mutableBlockPos);
-		} while (blockState.getMapColor(minecraft.level, mutableBlockPos) == MapColor.NONE && y > minecraft.level.getMinY());
+		} while (blockState.getMapColor(minecraft.level, mutableBlockPos) == MapColor.NONE && y > minecraft.level.getMinBuildHeight());
 		return y;
 	}
 
@@ -158,34 +161,34 @@ public class WorldMapScreen extends Screen {
 
 	private void renderMapWaypoints(GuiGraphics graphics, int mouseX, int mouseY) {
 		if (!AxolotlClientWaypoints.renderWaypoints.get()) return;
-		graphics.pose().pushMatrix();
-		var pos = new Vector2f();
+		graphics.pose().pushPose();
+		var pos = new Vector3f();
 		hoveredWaypoint = null;
 		for (Waypoint waypoint : AxolotlClientWaypoints.getCurrentWaypoints()) {
-			graphics.pose().pushMatrix();
+			graphics.pose().pushPose();
 			float posX = (float) (waypoint.x() - minecraft.player.getX()) + 1;
 			float posY = (float) (waypoint.z() - minecraft.player.getZ()) + 1;
 
-			graphics.pose().translate(posX * scale, posY * scale);
+			graphics.pose().translate(posX * scale, posY * scale, 0);
 			pos.zero();
-			graphics.pose().transformPosition(pos);
+			graphics.pose().last().pose().transformPosition(pos);
 
-			int textWidth = getFont().width(waypoint.display());
+			int textWidth = font.width(waypoint.display());
 			int width = textWidth + Waypoint.displayXOffset() * 2;
-			int textHeight = getFont().lineHeight;
+			int textHeight = font.lineHeight;
 			int height = textHeight + Waypoint.displayYOffset() * 2;
-			pos.sub(width / 2f, height / 2f);
+			pos.sub(width / 2f, height / 2f, 0);
 			graphics.fill(-(width / 2), -(height / 2), (width / 2), (height / 2), waypoint.color().toInt());
-			graphics.drawString(getFont(), waypoint.display(), -(textWidth / 2), -textHeight / 2, -1, false);
+			graphics.drawString(font, waypoint.display(), -(textWidth / 2), -textHeight / 2, -1, false);
 			if (hoveredWaypoint == null) {
 				if (mouseX >= pos.x() && mouseY >= pos.y() && mouseX < pos.x() + width && mouseY < pos.y() + height) {
 					hoveredWaypoint = waypoint;
 					graphics.renderOutline(-width / 2, -height / 2, width, height, Colors.WHITE.toInt());
 				}
 			}
-			graphics.pose().popMatrix();
+			graphics.pose().popPose();
 		}
-		graphics.pose().popMatrix();
+		graphics.pose().popPose();
 	}
 
 	private void collectPlayerYData() {
@@ -202,10 +205,10 @@ public class WorldMapScreen extends Screen {
 		} else if (surface + 1 <= minecraft.player.getBlockY()) {
 			atSurface = true;
 		} else {
-			while (solidBlocksAbovePlayer <= 3 && surface > minecraft.player.getBlockY() && surface > level.getMinY()) {
+			while (solidBlocksAbovePlayer <= 3 && surface > minecraft.player.getBlockY() && surface > level.getMinBuildHeight()) {
 				BlockState state = centerChunk.getBlockState(mutableBlockPos);
 				mutableBlockPos.setY(surface--);
-				if (!(state.propagatesSkylightDown() || !state.canOcclude() || !state.isViewBlocking(level, mutableBlockPos))) {
+				if (!(state.propagatesSkylightDown(level, mutableBlockPos.below()) || !state.canOcclude() || !state.isViewBlocking(level, mutableBlockPos))) {
 					solidBlocksAbovePlayer++;
 				}
 			}
@@ -335,7 +338,7 @@ public class WorldMapScreen extends Screen {
 	public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
 		if (!super.mouseDragged(mouseX, mouseY, button, dragX, dragY)) {
 			if (button == 0) {
-				dragOffset.add((float) dragX, (float) dragY);
+				dragOffset.add((float) dragX, (float) dragY, 0);
 				return true;
 			}
 			return false;
@@ -352,14 +355,14 @@ public class WorldMapScreen extends Screen {
 				var offsetY = height / 2f + dragOffset.y();
 				var mirroredOnOffsetX = offsetX - (mouseX - offsetX);
 				var mirroredOnOffsetY = offsetY - (mouseY - offsetY);
-				dragOffset.set(mirroredOnOffsetX - width / 2f, mirroredOnOffsetY - height / 2f);
+				dragOffset.set(mirroredOnOffsetX - width / 2f, mirroredOnOffsetY - height / 2f, 0);
 			} else {
 				scale /= 2;
 				var offsetX = width / 2f + dragOffset.x();
 				var offsetY = height / 2f + dragOffset.y();
 				var mirroredOnOffsetX = offsetX + (mouseX - offsetX) / 2f;
 				var mirroredOnOffsetY = offsetY + (mouseY - offsetY) / 2f;
-				dragOffset.set(mirroredOnOffsetX - width / 2f, mirroredOnOffsetY - height / 2f);
+				dragOffset.set(mirroredOnOffsetX - width / 2f, mirroredOnOffsetY - height / 2f, 0);
 			}
 		}
 		return true;
@@ -370,8 +373,8 @@ public class WorldMapScreen extends Screen {
 		addRenderableWidget(new ImageButton(4, height - 20, 16, 16, new WidgetSprites(OPTIONS_SPRITE, OPTIONS_SPRITE, OPTIONS_HOVERED_SPRITE),
 			btn -> minecraft.setScreen(AxolotlClientWaypoints.createOptionsScreen(this)), AxolotlClientWaypoints.tr("options")));
 		var slider = addRenderableWidget(new AbstractSliderButton(width - 150, 20, 150, 20, AxolotlClientWaypoints.tr("player_y"), 0) {
-			final int min = minecraft.level.getMinY() - 1;
-			final int max = minecraft.level.getMaxY() + 1;
+			final int min = minecraft.level.getMinBuildHeight() - 1;
+			final int max = minecraft.level.getMaxBuildHeight() + 1;
 
 			@Override
 			protected void updateMessage() {
@@ -487,16 +490,16 @@ public class WorldMapScreen extends Screen {
 		@Accessors(fluent = true)
 		private final int tilePosX, tilePosY;
 		private final Supplier<Tile> supplier;
-		private final Vector2f pos = new Vector2f();
+		private final Vector3f pos = new Vector3f();
 		private boolean loaded;
 
 		public void render(GuiGraphics guiGraphics, float playerX, float playerZ, float scale, float delta, int caveY, boolean atSurface) {
 			float x = tilePosX() * TILE_SIZE - playerX;
 			float y = tilePosY() * TILE_SIZE - playerZ;
-			guiGraphics.pose().pushMatrix();
-			guiGraphics.pose().translate(x, y);
+			guiGraphics.pose().pushPose();
+			guiGraphics.pose().translate(x, y, 0);
 			pos.zero();
-			guiGraphics.pose().transformPosition(pos);
+			guiGraphics.pose().last().pose().transformPosition(pos);
 			if (pos.x + TILE_SIZE * scale >= 0 && pos.x < guiGraphics.guiWidth() && pos.y + TILE_SIZE * scale >= 0 && pos.y < guiGraphics.guiHeight()) {
 				if (tile == null) {
 					if (!loaded) {
@@ -504,10 +507,10 @@ public class WorldMapScreen extends Screen {
 					}
 				} else {
 					// FIXME - floating point precision errors?
-					guiGraphics.blit(RenderPipelines.GUI_TEXTURED, tile.rl(), 0, 0, 0, 0, TILE_SIZE, TILE_SIZE, TILE_SIZE, TILE_SIZE);
+					guiGraphics.blit(tile.rl(), 0, 0, 0, 0, TILE_SIZE, TILE_SIZE, TILE_SIZE, TILE_SIZE);
 				}
 			}
-			guiGraphics.pose().popMatrix();
+			guiGraphics.pose().popPose();
 		}
 
 		public CompletableFuture<?> load(int caveY, boolean atSurface) {
@@ -560,7 +563,7 @@ public class WorldMapScreen extends Screen {
 
 		public static Tile create(int x, int y, LevelChunkStorage.Entry chunk) {
 			var rl = getTileRl(x, y);
-			var tex = new DynamicTexture(rl::toString, new NativeImage(TILE_SIZE, TILE_SIZE, false));
+			var tex = new DynamicTexture(new NativeImage(TILE_SIZE, TILE_SIZE, false));
 			tex.getPixels().fillRect(0, 0, TILE_SIZE, TILE_SIZE, Colors.BLACK.toInt());
 			Minecraft.getInstance().getTextureManager().register(rl, tex);
 			return new Tile(x, y, rl, tex, chunk);
@@ -581,7 +584,7 @@ public class WorldMapScreen extends Screen {
 				tex.upload();
 				return;
 			}
-			int levelMinY = level.getMinY();
+			int levelMinY = level.getMinBuildHeight();
 			int centerX = (tilePosX * TILE_SIZE) + TILE_SIZE / 2;
 			int centerZ = (tilePosY * TILE_SIZE) + TILE_SIZE / 2;
 
@@ -661,21 +664,21 @@ public class WorldMapScreen extends Screen {
 					}
 
 					d = e;
-					if (Minimap.useTextureSampling.get()) {
+					/*if (Minimap.useTextureSampling.get()) {
 						if (z >= 0 && !blockState.isAir()) {
 							final int fz = z, fx = x;
 							TextureSampler.getSample(blockState, level, mutableBlockPos, brightness).thenAccept(color -> {
-								color = ARGB.opaque(color);
-								if (pixels.getPixel(fx, fz) != color) {
-									pixels.setPixel(fx, fz, color);
+								color = FastColor.ARGB32.opaque(color);
+								if (Integer.rotateRight(pixels.getPixelRGBA(fx, fz), 4) != color) {
+									pixels.setPixelRGBA(fx, fz, Integer.rotateLeft(color, 4));
 									tex.upload();
 								}
 							});
 						}
-					} else {
-						int color = mapColor.calculateARGBColor(brightness);
-						if (z >= 0 && pixels.getPixel(x, z) != color) {
-							pixels.setPixel(x, z, ARGB.opaque(color));
+					} else*/ {
+						int color = mapColor.calculateRGBColor(brightness);
+						if (z >= 0 && Integer.rotateRight(pixels.getPixelRGBA(x, z), 4) != color) {
+							pixels.setPixelRGBA(x, z, FastColor.ARGB32.opaque(color));
 							updated = true;
 						}
 					}

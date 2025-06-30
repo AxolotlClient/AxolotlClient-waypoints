@@ -22,19 +22,20 @@
 
 package io.github.axolotlclient.waypoints.mixin;
 
-import net.minecraft.client.Camera;
-import net.minecraft.client.renderer.CachedPerspectiveProjectionMatrixBuffer;
+import io.github.axolotlclient.waypoints.AxolotlClientWaypoints;
+import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.renderer.GameRenderer;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.gen.Accessor;
-import org.spongepowered.asm.mixin.gen.Invoker;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(GameRenderer.class)
-public interface GameRendererAccessor {
+public class GameRendererMixin {
 
-	@Accessor("hud3dProjectionMatrixBuffer")
-	CachedPerspectiveProjectionMatrixBuffer getHud3dProjectionMatrixBuffer();
+	@Inject(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/Minecraft;getMainRenderTarget()Lcom/mojang/blaze3d/pipeline/RenderTarget;"))
+	private void renderWaypoints(DeltaTracker deltaTracker, boolean renderLevel, CallbackInfo ci) {
+		AxolotlClientWaypoints.WAYPOINT_RENDERER.render(deltaTracker);
+	}
 
-	@Invoker("getFov")
-	float invokeGetFov(Camera mainCamera, float f, boolean b);
 }
