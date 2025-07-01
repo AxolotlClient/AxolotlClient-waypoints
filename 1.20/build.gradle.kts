@@ -3,11 +3,16 @@ plugins {
 	id("io.github.p03w.machete")
 }
 
-group = project.property("maven_group")!!
-version = "${project.property("version")}+${project.property("minecraft_120")}"
+val minecraftVersion = "1.20.1"
+val minecraftFriendly = "1.20.1"
+val fapiVersion = "0.92.2"
+
+group = project.property("maven_group") as String
+version = "${project.property("version")}+$minecraftVersion"
 base.archivesName = project.property("archives_base_name").toString()
 
 loom {
+	accessWidenerPath.set(file("src/main/resources/axolotlclient-waypoints.accesswidener"))
 	mods {
 		create("axolotlclient") {
 			sourceSet("main")
@@ -18,13 +23,8 @@ loom {
 	}
 }
 
-repositories {
-	maven("https://maven.noxcrew.com/public")
-	maven("https://maven.enginehub.org/repo/")
-}
-
 dependencies {
-	minecraft("com.mojang:minecraft:${project.property("minecraft_120")}")
+	minecraft("com.mojang:minecraft:${minecraftVersion}")
 	mappings(loom.layered {
 		officialMojangMappings {
 			nameSyntheticMembers = true
@@ -34,13 +34,10 @@ dependencies {
 
 	modImplementation("net.fabricmc:fabric-loader:${project.property("fabric_loader")}")
 
-	modImplementation("net.fabricmc.fabric-api:fabric-api:${project.property("fapi_120")}+${project.property("minecraft_120")}")
+	modImplementation("net.fabricmc.fabric-api:fabric-api:${fapiVersion}+${minecraftFriendly}")
 
-	modImplementation("io.github.axolotlclient:AxolotlClient-config:${project.property("config")}+${project.property("minecraft_120")}") {
-		exclude(group = "com.terraformersmc")
-		exclude(group = "org.lwjgl")
-	}
-	include("io.github.axolotlclient:AxolotlClient-config:${project.property("config")}+${project.property("minecraft_120")}")
+	modImplementation("io.github.axolotlclient:AxolotlClient-config:${project.property("config")}+${minecraftFriendly}")
+	include("io.github.axolotlclient:AxolotlClient-config:${project.property("config")}+${minecraftFriendly}")
 	modImplementation("io.github.axolotlclient.AxolotlClient-config:AxolotlClientConfig-common:${project.property("config")}")
 
 	modCompileOnlyApi("com.terraformersmc:modmenu:8.0.0") {
@@ -67,6 +64,9 @@ tasks.processResources {
 }
 
 tasks.withType(JavaCompile::class).configureEach {
+	// Ensure that the encoding is set to UTF-8, no matter what the system default is
+	// this fixes some edge cases with special characters not displaying correctly
+	// see http://yodaconditions.net/blog/fix-for-java-file-encoding-problems-with-gradle.html
 	options.encoding = "UTF-8"
 
 	if (JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_18)) {
@@ -81,6 +81,7 @@ java {
 
 tasks.runClient {
 	classpath(sourceSets.getByName("test").runtimeClasspath)
+	jvmArgs("-XX:+AllowEnhancedClassRedefinition")
 }
 
 // Configure the maven publication
@@ -115,7 +116,7 @@ modrinth {
 	versionNumber = "${project.version}"
 	versionType = "release"
 	uploadFile = tasks.remapJar.get()
-	gameVersions.set(listOf("${project.property("minecraft_120")}"))
+	gameVersions.set(listOf("${minecraftVersion}"))
 	loaders.set(listOf("quilt", "fabric"))
 	additionalFiles.set(listOf(tasks.remapSourcesJar))
 	dependencies {

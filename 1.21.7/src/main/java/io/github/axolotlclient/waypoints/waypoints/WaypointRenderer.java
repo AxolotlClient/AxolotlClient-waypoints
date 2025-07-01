@@ -173,7 +173,7 @@ public class WaypointRenderer {
 
 		//float x = (graphics.guiWidth()/2f) + ((graphics.guiWidth() - width) * (viewProj.x() / 2f));
 		float x = 0.5f * (graphics.guiWidth() * (projX + 1) - width * projX);
-		// graphics.guiHeight() - (graphics.guiHeight()/2f + (graphics.guiHeight()-height) * (viewProj.y() / 2f));
+		//float y = graphics.guiHeight() - (graphics.guiHeight()/2f + (graphics.guiHeight()-height) * (viewProj.y() / 2f));
 		float y = graphics.guiHeight() * (0.5f - projY / 2) + (height * projY) / 2f;
 
 		pose.translate(x, y);

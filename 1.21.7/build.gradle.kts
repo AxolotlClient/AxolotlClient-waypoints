@@ -89,7 +89,7 @@ java {
 
 tasks.runClient {
 	classpath(sourceSets.getByName("test").runtimeClasspath)
-	jvmArgs("-XX:+AllowEnhancedClassRedefinition -XX:HotswapAgent=fatjar")
+	jvmArgs("-XX:+AllowEnhancedClassRedefinition")
 }
 
 // Configure the maven publication

@@ -81,7 +81,7 @@ java {
 
 tasks.runClient {
 	classpath(sourceSets.getByName("test").runtimeClasspath)
-	jvmArgs("-XX:+AllowEnhancedClassRedefinition -XX:HotswapAgent=fatjar")
+	jvmArgs("-XX:+AllowEnhancedClassRedefinition")
 }
 
 // Configure the maven publication
@@ -116,7 +116,7 @@ modrinth {
 	versionNumber = "${project.version}"
 	versionType = "release"
 	uploadFile = tasks.remapJar.get()
-	gameVersions.set(listOf("${project.property("minecraft_121")}"))
+	gameVersions.set(listOf("1.21", "1.21.1"))
 	loaders.set(listOf("quilt", "fabric"))
 	additionalFiles.set(listOf(tasks.remapSourcesJar))
 	dependencies {

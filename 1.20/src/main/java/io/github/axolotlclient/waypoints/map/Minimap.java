@@ -37,7 +37,6 @@ import io.github.axolotlclient.waypoints.AxolotlClientWaypoints;
 import io.github.axolotlclient.waypoints.util.ARGB;
 import io.github.axolotlclient.waypoints.waypoints.Waypoint;
 import net.minecraft.Util;
-import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.EffectRenderingInventoryScreen;
@@ -50,7 +49,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkAccess;
-import net.minecraft.world.level.chunk.status.ChunkStatus;
+import net.minecraft.world.level.chunk.ChunkStatus;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.material.MapColor;
@@ -70,7 +69,7 @@ public class Minimap {
 	private static final OptionCategory minimap = OptionCategory.create("minimap");
 	final int radius = 64, size = radius * 2;
 	private static final ResourceLocation texLocation = AxolotlClientWaypoints.rl("minimap");
-	public static final ResourceLocation arrowLocation = AxolotlClientWaypoints.rl("arrow");
+	public static final ResourceLocation arrowLocation = AxolotlClientWaypoints.rl("textures/gui/sprites/arrow.png");
 	private final NativeImage pixels = new NativeImage(size, size, false);
 	public long updateDuration = -1;
 	private DynamicTexture tex;
@@ -95,7 +94,7 @@ public class Minimap {
 		this.y = 10;
 	}
 
-	public void renderMapOverlay(GuiGraphics guiGraphics, DeltaTracker deltaTracker) {
+	public void renderMapOverlay(GuiGraphics guiGraphics, float delta) {
 		if (!isEnabled()) {
 			return;
 		}
@@ -106,7 +105,7 @@ public class Minimap {
 		}
 		if (!minecraft.player.getActiveEffects().isEmpty() && (minecraft.screen == null ||
 			!(this.minecraft.screen instanceof EffectRenderingInventoryScreen<?> effectRenderingInventoryScreen && effectRenderingInventoryScreen.canSeeEffects()))) {
-			if (minecraft.player.getActiveEffects().stream().anyMatch(e -> !e.getEffect().value().isBeneficial())) {
+			if (minecraft.player.getActiveEffects().stream().anyMatch(e -> !e.getEffect().isBeneficial())) {
 				this.y += 26;
 			}
 			this.y += 20;
@@ -149,7 +148,7 @@ public class Minimap {
 		guiGraphics.pose().scale(0.5f * arrowScale.get(), 0.5f * arrowScale.get(), 1);
 		int arrowSize = 15;
 		guiGraphics.pose().translate(-arrowSize / 2f, -arrowSize / 2f, 1);
-		guiGraphics.blitSprite(arrowLocation, 0, 0, arrowSize, arrowSize);
+		guiGraphics.blit(arrowLocation, 0, 0, 0, 0, arrowSize, arrowSize, arrowSize, arrowSize);
 		guiGraphics.pose().popPose();
 
 		guiGraphics.pose().popPose();

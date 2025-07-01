@@ -33,11 +33,14 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
+import com.google.common.collect.Lists;
 import com.mojang.blaze3d.platform.NativeImage;
 import io.github.axolotlclient.AxolotlClientConfig.api.util.Colors;
 import io.github.axolotlclient.waypoints.AxolotlClientWaypoints;
 import io.github.axolotlclient.waypoints.map.util.LevelChunkStorage;
 import io.github.axolotlclient.waypoints.map.widgets.DropdownButton;
+import io.github.axolotlclient.waypoints.map.widgets.ImageButton;
+import io.github.axolotlclient.waypoints.map.widgets.WidgetSprites;
 import io.github.axolotlclient.waypoints.util.ARGB;
 import io.github.axolotlclient.waypoints.waypoints.Waypoint;
 import lombok.Getter;
@@ -48,8 +51,6 @@ import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractSliderButton;
-import net.minecraft.client.gui.components.ImageButton;
-import net.minecraft.client.gui.components.WidgetSprites;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.core.BlockPos;
@@ -63,20 +64,20 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkAccess;
+import net.minecraft.world.level.chunk.ChunkStatus;
 import net.minecraft.world.level.chunk.LevelChunk;
-import net.minecraft.world.level.chunk.status.ChunkStatus;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.material.MapColor;
 import org.joml.Vector2i;
 import org.joml.Vector3f;
 
-@SuppressWarnings({"DataFlowIssue", "ResultOfMethodCallIgnored"})
+@SuppressWarnings({"DataFlowIssue"})
 @Slf4j
 public class WorldMapScreen extends Screen {
 	private static final int TILE_SIZE = 16;
-	private static final ResourceLocation OPTIONS_SPRITE = AxolotlClientWaypoints.rl("options");
-	private static final ResourceLocation OPTIONS_HOVERED_SPRITE = OPTIONS_SPRITE.withSuffix("_hovered");
+	private static final ResourceLocation OPTIONS_SPRITE = AxolotlClientWaypoints.rl("textures/gui/sprites/options.png");
+	private static final ResourceLocation OPTIONS_HOVERED_SPRITE = AxolotlClientWaypoints.rl("textures/gui/sprites/options_hovered.png");
 
 	private final Map<Vector2i, LazyTile> tiles = new ConcurrentHashMap<>();
 	private final Vector3f dragOffset = new Vector3f();
@@ -92,8 +93,8 @@ public class WorldMapScreen extends Screen {
 	}
 
 	@Override
-	public void renderBackground(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-		super.renderBackground(guiGraphics, mouseX, mouseY, partialTick);
+	public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+		renderBackground(guiGraphics);
 		guiGraphics.pose().pushPose();
 		guiGraphics.pose().translate(width / 2f, height / 2f, 0);
 		guiGraphics.pose().last().pose().translate(dragOffset);
@@ -113,12 +114,8 @@ public class WorldMapScreen extends Screen {
 		guiGraphics.pose().scale(0.5f * Minimap.arrowScale.get(), 0.5f * Minimap.arrowScale.get(), 1);
 		int arrowSize = 15;
 		guiGraphics.pose().translate(-arrowSize / 2f, -arrowSize / 2f, 0);
-		guiGraphics.blitSprite(Minimap.arrowLocation, 0, 0, arrowSize, arrowSize);
+		guiGraphics.blit(Minimap.arrowLocation, 0, 0, 0, 0, arrowSize, arrowSize, arrowSize, arrowSize);
 		guiGraphics.pose().popPose();
-	}
-
-	@Override
-	public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
 		super.render(guiGraphics, mouseX, mouseY, partialTick);
 
 		if (mouseX > -1 && mouseY > -1) {
@@ -252,7 +249,7 @@ public class WorldMapScreen extends Screen {
 		loadNeighbour(tile, 1, -1, atSurface, caveY, queue, origin);
 		loadNeighbour(tile, 0, -1, atSurface, caveY, queue, origin);
 		if (!queue.isEmpty()) {
-			queue.reversed().forEach(Runnable::run);
+			Lists.reverse(queue).forEach(Runnable::run);
 		}
 	}
 
@@ -347,8 +344,8 @@ public class WorldMapScreen extends Screen {
 	}
 
 	@Override
-	public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
-		if (!super.mouseScrolled(mouseX, mouseY, scrollX, scrollY)) {
+	public boolean mouseScrolled(double mouseX, double mouseY, double scrollY) {
+		if (!super.mouseScrolled(mouseX, mouseY, scrollY)) {
 			if (scrollY > 0) {
 				scale *= 2;
 				var offsetX = width / 2f + dragOffset.x();
@@ -408,11 +405,6 @@ public class WorldMapScreen extends Screen {
 			});
 		}
 		initializedOnce = true;
-	}
-
-	@Override
-	public void tick() {
-
 	}
 
 	private void loadSavedTiles() {
@@ -543,7 +535,6 @@ public class WorldMapScreen extends Screen {
 		}
 	}
 
-	@SuppressWarnings("ResultOfMethodCallIgnored")
 	private record Tile(int tilePosX, int tilePosY, ResourceLocation rl, DynamicTexture tex,
 						LevelChunkStorage.Entry chunk) {
 		public static final String FILE_EXTENSION = ".bin";
