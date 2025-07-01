@@ -26,7 +26,7 @@ import java.nio.file.Path;
 
 public class AxolotlClientWaypointsCommon {
 
-	public static Path getCurrentStorageDir() {
+	public static Path getCurrentWorldStorageDir() {
 		throw new UnsupportedOperationException("Implemented using Mixin");
 	}
 }

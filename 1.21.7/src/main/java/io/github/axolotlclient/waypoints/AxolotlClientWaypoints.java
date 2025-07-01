@@ -59,6 +59,8 @@ import net.minecraft.resources.ResourceLocation;
 public class AxolotlClientWaypoints implements ClientModInitializer {
 
 	public static final String MODID = "axolotlclient_waypoints";
+	public static final Path OPTIONS_PATH = FabricLoader.getInstance().getConfigDir().resolve(MODID).resolve("options.json");
+	public static final boolean AXOLOTLCLIENT_PRESENT = FabricLoader.getInstance().isModLoaded("axolotlclient");
 	private static final Path MOD_STORAGE_DIR = FabricLoader.getInstance().getGameDir().resolve("." + MODID);
 	public static final Minimap MINIMAP = new Minimap();
 	public static final WaypointStorage WAYPOINT_STORAGE = new WaypointStorage();
@@ -82,7 +84,7 @@ public class AxolotlClientWaypoints implements ClientModInitializer {
 		waypoints.add(renderWaypoints, renderWaypointsInWorld, renderOutOfViewWaypointsOnScreenEdge);
 
 		ConfigManager configManager;
-		AxolotlClientConfig.getInstance().register(configManager = new VersionedJsonConfigManager(FabricLoader.getInstance().getConfigDir().resolve(MODID).resolve("options.json"), category, 1,
+		AxolotlClientConfig.getInstance().register(configManager = new VersionedJsonConfigManager(OPTIONS_PATH, category, 1,
 			(oldVersion, newVersion, rootCategory, json) -> json));
 		configManager.load();
 		configManager.save();
@@ -139,14 +141,19 @@ public class AxolotlClientWaypoints implements ClientModInitializer {
 
 	public static Path getCurrentStorageDir() {
 		var mc = Minecraft.getInstance();
+		return getCurrentWorldStorageDir()
+			.resolve(getB64(mc.level.dimension().location().toString()));
+	}
+
+	public static Path getCurrentWorldStorageDir() {
+		var mc = Minecraft.getInstance();
 		String str;
 		if (mc.getSingleplayerServer() == null) {
 			str = mc.getCurrentServer().ip;
 		} else {
 			str = ((MinecraftServerAccessor) mc.getSingleplayerServer()).getStorageSource().getLevelId();
 		}
-		return AxolotlClientWaypoints.MOD_STORAGE_DIR.resolve(getB64(str))
-			.resolve(getB64(mc.level.dimension().location().toString()));
+		return AxolotlClientWaypoints.MOD_STORAGE_DIR.resolve(getB64(str));
 	}
 
 	public static boolean playerHasOp() {

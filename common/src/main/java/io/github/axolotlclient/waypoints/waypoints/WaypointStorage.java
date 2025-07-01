@@ -60,7 +60,7 @@ public class WaypointStorage {
 	}
 
 	private Path getCurrentPath() {
-		return AxolotlClientWaypointsCommon.getCurrentStorageDir().resolve("waypoints.json");
+		return AxolotlClientWaypointsCommon.getCurrentWorldStorageDir().resolve("waypoints.json");
 	}
 
 	private Path currentSave = null;

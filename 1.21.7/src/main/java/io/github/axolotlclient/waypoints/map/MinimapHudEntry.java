@@ -22,5 +22,83 @@
 
 package io.github.axolotlclient.waypoints.map;
 
-public class MinimapHudEntry /*implements HudEntry*/ {
+import java.util.List;
+
+import io.github.axolotlclient.AxolotlClientConfig.api.options.Option;
+import io.github.axolotlclient.modules.hud.gui.entry.BoxHudEntry;
+import io.github.axolotlclient.waypoints.AxolotlClientWaypoints;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.resources.ResourceLocation;
+
+public class MinimapHudEntry extends BoxHudEntry {
+
+	public static final ResourceLocation ID = AxolotlClientWaypoints.rl("minimap_hud");
+
+	private final Minimap minimap;
+
+	public MinimapHudEntry(Minimap minimap) {
+		super(AxolotlClientWaypoints.MINIMAP.size+2, AxolotlClientWaypoints.MINIMAP.size+2, true);
+		this.minimap = minimap;
+		outline = minimap.minimapOutline;
+		outlineColor = minimap.outlineColor;
+	}
+
+	@Override
+	public void renderComponent(GuiGraphics guiGraphics, float v) {
+		int x = (int) (getX()/getScale()+1);
+		if (minimap.getX() != x) {
+			minimap.setX(x);
+		}
+		int y = (int) (getY()/getScale()+1);
+		if (minimap.getY() != y) {
+			minimap.setY(y);
+		}
+		minimap.renderMap(guiGraphics);
+	}
+
+	@Override
+	public void renderPlaceholderComponent(GuiGraphics guiGraphics, float v) {
+
+	}
+
+	@Override
+	public ResourceLocation getId() {
+		return ID;
+	}
+
+	@Override
+	public void setX(int x) {
+		super.setX(x);
+		minimap.setX((int) (x/getScale())+1);
+	}
+
+	@Override
+	public void setY(int y) {
+		super.setY(y);
+		minimap.setY((int) (y/getScale())+1);
+	}
+
+	@Override
+	public List<Option<?>> getConfigurationOptions() {
+		var options = super.getConfigurationOptions();
+		options.remove(enabled);
+		options.remove(background);
+		options.remove(backgroundColor);
+		return options;
+	}
+
+	@Override
+	public boolean isEnabled() {
+		return minimap.isEnabled();
+	}
+
+	@Override
+	public double getDefaultX() {
+		return 0.85;
+	}
+
+	@Override
+	public double getDefaultY() {
+		return 0.05;
+	}
 }

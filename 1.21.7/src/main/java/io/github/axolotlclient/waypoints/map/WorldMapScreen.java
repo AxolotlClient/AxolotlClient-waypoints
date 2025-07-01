@@ -110,7 +110,7 @@ public class WorldMapScreen extends Screen {
 		renderMapWaypoints(guiGraphics, mouseX, mouseY);
 
 		guiGraphics.pose().rotate((float) (((minecraft.player.getVisualRotationYInDegrees() + 180) / 180) * Math.PI));
-		guiGraphics.pose().scale(0.5f * Minimap.arrowScale.get(), 0.5f * Minimap.arrowScale.get());
+		guiGraphics.pose().scale(0.5f * AxolotlClientWaypoints.MINIMAP.arrowScale.get(), 0.5f * AxolotlClientWaypoints.MINIMAP.arrowScale.get());
 		int arrowSize = 15;
 		guiGraphics.pose().translate(-arrowSize / 2f, -arrowSize / 2f);
 		guiGraphics.blitSprite(RenderPipelines.GUI_TEXTURED, Minimap.arrowLocation, 0, 0, arrowSize, arrowSize);
@@ -661,7 +661,7 @@ public class WorldMapScreen extends Screen {
 					}
 
 					d = e;
-					if (Minimap.useTextureSampling.get()) {
+					if (AxolotlClientWaypoints.MINIMAP.useTextureSampling.get()) {
 						if (z >= 0 && !blockState.isAir()) {
 							final int fz = z, fx = x;
 							TextureSampler.getSample(blockState, level, mutableBlockPos, brightness).thenAccept(color -> {

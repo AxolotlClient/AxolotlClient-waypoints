@@ -53,6 +53,9 @@ dependencies {
 	include("io.github.axolotlclient:AxolotlClient-config:${project.property("config")}+$minecraftFriendly")
 	modImplementation("io.github.axolotlclient.AxolotlClient-config:AxolotlClientConfig-common:${project.property("config")}")
 
+	modImplementation("io.github.axolotlclient:AxolotlClient:3.1.4+$minecraftVersion")
+	compileOnly("io.github.axolotlclient.AxolotlClient:AxolotlClient-common:3.1.4")
+
 	modCompileOnly("com.terraformersmc:modmenu:13.0.0-beta.1")
 
 	implementation(include(project(path = ":common", configuration = "shadow"))!!)
