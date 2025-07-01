@@ -1,5 +1,5 @@
 /*
- * Copyright © 2024 moehreag <moehreag@gmail.com> & Contributors
+ * Copyright © 2025 moehreag <moehreag@gmail.com> & Contributors
  *
  * This file is part of AxolotlClient.
  *
@@ -20,12 +20,16 @@
  * For more information, see the LICENSE file.
  */
 
-package io.github.axolotlclient;
+package io.github.axolotlclient.waypoints.mixin;
 
-import net.fabricmc.api.ClientModInitializer;
+import net.minecraft.client.Camera;
+import net.minecraft.client.renderer.GameRenderer;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.gen.Invoker;
 
-public class AxolotlClientWaypointsTest implements ClientModInitializer {
-	@Override
-	public void onInitializeClient() {
-	}
+@Mixin(GameRenderer.class)
+public interface GameRendererAccessor {
+
+	@Invoker("getFov")
+	double invokeGetFov(Camera mainCamera, float f, boolean b);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2023 moehreag <moehreag@gmail.com> & Contributors
+ * Copyright © 2025 moehreag <moehreag@gmail.com> & Contributors
  *
  * This file is part of AxolotlClient.
  *
@@ -20,13 +20,13 @@
  * For more information, see the LICENSE file.
  */
 
-package io.github.axolotlclient;
+package io.github.axolotlclient.waypoints.mixin;
 
-import net.fabricmc.api.ClientModInitializer;
+import net.minecraft.client.renderer.LevelRenderer;
+import org.spongepowered.asm.mixin.Mixin;
 
-public class AxolotlClientWaypointsTest implements ClientModInitializer {
-	@Override
-	public void onInitializeClient() {
+@Mixin(LevelRenderer.class)
+public interface LevelRendererAccessor {
 
-	}
+
 }

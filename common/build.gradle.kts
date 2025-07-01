@@ -11,7 +11,7 @@ dependencies {
 	compileOnly("org.jetbrains:annotations:24.0.0")
 
 	// take the oldest version just to build against
-	testRuntimeOnly(compileOnly("io.github.axolotlclient:AxolotlClient-config:${project.property("config")}+${project.property("minecraft_18")}") {
+	testRuntimeOnly(compileOnly("io.github.axolotlclient:AxolotlClient-config:${project.property("config")}+1.8.9") {
 		isTransitive = false
 	})
 	testRuntimeOnly(testCompileOnly(compileOnly("io.github.axolotlclient.AxolotlClient-config:AxolotlClientConfig-common:${project.property("config")}")!!)!!)

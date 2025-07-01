@@ -1,5 +1,5 @@
 /*
- * Copyright © 2024 moehreag <moehreag@gmail.com> & Contributors
+ * Copyright © 2025 moehreag <moehreag@gmail.com> & Contributors
  *
  * This file is part of AxolotlClient.
  *
@@ -20,12 +20,7 @@
  * For more information, see the LICENSE file.
  */
 
-package io.github.axolotlclient;
+package io.github.axolotlclient.waypoints.map;
 
-import net.fabricmc.api.ClientModInitializer;
-
-public class AxolotlClientWaypointsTest implements ClientModInitializer {
-	@Override
-	public void onInitializeClient() {
-	}
+public class MinimapHudEntry /*implements HudEntry*/ {
 }

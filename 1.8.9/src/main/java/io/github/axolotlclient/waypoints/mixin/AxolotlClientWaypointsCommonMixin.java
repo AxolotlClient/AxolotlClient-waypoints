@@ -1,5 +1,5 @@
 /*
- * Copyright © 2024 moehreag <moehreag@gmail.com> & Contributors
+ * Copyright © 2025 moehreag <moehreag@gmail.com> & Contributors
  *
  * This file is part of AxolotlClient.
  *
@@ -20,12 +20,24 @@
  * For more information, see the LICENSE file.
  */
 
-package io.github.axolotlclient;
+package io.github.axolotlclient.waypoints.mixin;
 
-import net.fabricmc.api.ClientModInitializer;
+import java.nio.file.Path;
 
-public class AxolotlClientWaypointsTest implements ClientModInitializer {
-	@Override
-	public void onInitializeClient() {
+import io.github.axolotlclient.waypoints.AxolotlClientWaypoints;
+import io.github.axolotlclient.waypoints.AxolotlClientWaypointsCommon;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Overwrite;
+
+@Mixin(value = AxolotlClientWaypointsCommon.class, remap = false)
+public class AxolotlClientWaypointsCommonMixin {
+
+	/**
+	 * @author moehreag
+	 * @reason implement cross-version access
+	 */
+	@Overwrite
+	public static Path getCurrentStorageDir() {
+		return AxolotlClientWaypoints.getCurrentStorageDir();
 	}
 }

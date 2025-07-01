@@ -38,6 +38,7 @@ import net.minecraft.client.renderer.RenderType;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 import org.joml.Quaternionf;
+import org.joml.Vector3f;
 import org.joml.Vector4f;
 
 public class WaypointRenderer {
@@ -61,9 +62,9 @@ public class WaypointRenderer {
 		var cam = minecraft.gameRenderer.getMainCamera();
 
 		stack.pushPose();
-		stack.last().pose().rotate(cam.rotation().invert());
+		stack.last().pose().rotate(cam.rotation());
 		var camPos = minecraft.gameRenderer.getMainCamera().getPosition();
-		var _x = delta-1;
+		var _x = delta-=1;
 		RenderSystem.disableDepthTest();
 		RenderSystem.disableCull();
 
@@ -85,7 +86,7 @@ public class WaypointRenderer {
 	private void renderWaypoint(Waypoint waypoint, PoseStack stack, Vec3 camPos, Camera cam, MultiBufferSource.BufferSource bufferSource) {
 		stack.pushPose();
 		stack.translate(waypoint.x() - camPos.x(), waypoint.y() - camPos.y(), waypoint.z() - camPos.z());
-		stack.last().pose().rotate(cam.rotation());
+		stack.last().pose().rotate(cam.rotation().conjugate(new Quaternionf()));
 		float scale = 0.04F;
 		stack.scale(scale, -scale, scale);
 		int textWidth = minecraft.font.width(waypoint.display());
@@ -149,10 +150,13 @@ public class WaypointRenderer {
 		int height = textHeight + Waypoint.displayYOffset() * 2;
 
 		viewProj.set(waypoint.x(), waypoint.y(), waypoint.z(), 1);
-		view.rotation(camera.rotation()).translate(camera.getPosition().toVector3f().negate());
+		var camRot = new Quaternionf(camera.rotation());
+		//camRot.rotateY((float) Math.PI);
+		//camRot.rotationX(-camRot.angle(new Vector3f()).x());
+		view.rotation(camRot).translate(camera.getPosition().toVector3f().negate());
+		graphics.drawString(minecraft.font, ""+camRot, 20, 20, -1);
 
 		Matrix4f projection = getProjectionMatrix(fov);
-		graphics.drawString(minecraft.font, projection+"", 20, 20, -1);
 		projection.mul(view);
 		viewProj.mul(projection);
 
@@ -173,7 +177,7 @@ public class WaypointRenderer {
 		//float x = (graphics.guiWidth()/2f) + ((graphics.guiWidth() - width) * (viewProj.x() / 2f));
 		float x = 0.5f * (graphics.guiWidth() * (projX + 1) - width * projX);
 		//float y = graphics.guiHeight() - (graphics.guiHeight()/2f + (graphics.guiHeight()-height) * (viewProj.y() / 2f));
-		float y = graphics.guiHeight() * (0.5f + projY / 2) - (height * projY) / 2f;
+		float y = graphics.guiHeight() * (0.5f - projY / 2) + (height * projY) / 2f;
 
 		pose.translate(x, y, 0);
 

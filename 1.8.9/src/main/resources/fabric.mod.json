@@ -3,7 +3,7 @@
 	"id": "axolotlclient-waypoints",
 	"version": "${version}",
 	"name": "AxolotlClient",
-	"description": "Waypoints addon for AxolotlClient",
+	"description": "Free & Open-Source Minecraft Mod for use in PvP and other Scenarios",
 	"authors": [
 		"moehreag"
 	],
@@ -24,9 +24,6 @@
 	"entrypoints": {
 		"client": [
 			"io.github.axolotlclient.waypoints.AxolotlClientWaypoints"
-		],
-		"modmenu": [
-			"io.github.axolotlclient.config.modmenu.ModMenuCompat"
 		]
 	},
 	"mixins": [
@@ -36,14 +33,9 @@
 		"modmenu:clientsideOnly": true
 	},
 	"depends": {
-		"fabricloader": ">=0.15.0",
-		"minecraft": "1.8.9",
-		"osl-resource-loader": "*",
-		"osl-lifecycle-events": "*",
-		"osl-keybinds": "*",
-		"osl-entrypoints": "*",
-		"axolotlclientconfig": "*",
-		"axolotlclient-waypoints-common": "*",
-		"axolotlclient": "*"
+		"fabricloader": ">=0.15.11",
+		"minecraft": "<=1.21.1 >=1.21",
+		"fabric-api": "*",
+		"axolotlclientconfig": "*"
 	}
 }

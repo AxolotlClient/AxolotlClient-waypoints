@@ -4,8 +4,12 @@ plugins {
 	id("io.github.p03w.machete")
 }
 
+val minecraftVersion = "1.8.9"
+val feather = "1.8.9+build.27"
+val osl = "0.16.3"
+
 group = project.property("maven_group")!!
-version = "${project.property("version")}+${project.property("minecraft_18")}"
+version = "${project.property("version")}+$minecraftVersion"
 base.archivesName = project.property("archives_base_name").toString()
 
 loom {
@@ -22,21 +26,21 @@ loom {
 }
 
 dependencies {
-	minecraft("com.mojang:minecraft:${project.property("minecraft_18")}")
-	mappings("net.ornithemc:feather:${project.property("mappings_18")}")
+	minecraft("com.mojang:minecraft:$minecraftVersion")
+	mappings("net.ornithemc:feather:$feather")
 
 	modImplementation("net.fabricmc:fabric-loader:${project.property("fabric_loader")}")
 
-	modImplementation("io.github.axolotlclient:AxolotlClient-config:${project.property("config")}+${project.property("minecraft_18")}") {
+	modImplementation("io.github.axolotlclient:AxolotlClient-config:${project.property("config")}+$minecraftVersion") {
 		exclude(group = "org.lwjgl")
 		exclude(group = "org.slf4j")
 	}
-	include("io.github.axolotlclient:AxolotlClient-config:${project.property("config")}+${project.property("minecraft_18")}")
+	include("io.github.axolotlclient:AxolotlClient-config:${project.property("config")}+$minecraftVersion}")
 	modImplementation("io.github.axolotlclient.AxolotlClient-config:AxolotlClientConfig-common:${project.property("config")}")
 
-	ploceus.dependOsl(project.property("osl") as String)
+	ploceus.dependOsl(osl)
 
-	modImplementation("com.terraformersmc:modmenu:0.1.1+mc1.8.9")
+	modImplementation("com.terraformersmc:modmenu:0.3.1+mc1.8.9")
 
 	implementation(include(project(path = ":common", configuration = "shadow"))!!)
 
@@ -49,39 +53,17 @@ dependencies {
 	runtimeOnly("org.lwjgl:lwjgl-nanovg:${lwjglVersion}:natives-macos")
 	runtimeOnly("org.lwjgl:lwjgl-nanovg:${lwjglVersion}:natives-macos-arm64")
 
-	include("org.apache.logging.log4j:log4j-slf4j-impl:2.0-beta9") {
+	/*include("org.apache.logging.log4j:log4j-slf4j-impl:2.0-beta9") {
 		exclude(group = "org.apache.logging.log4j", module = "log4j-api")
 		exclude(group = "org.apache.logging.log4j", module = "log4j-core")
 	}
 	implementation(include("org.slf4j:slf4j-api:1.7.36")!!)
-	localRuntime("org.slf4j:slf4j-jdk14:1.7.36")
+	localRuntime("org.slf4j:slf4j-jdk14:1.7.36")*/
 
-	compileOnly("org.lwjgl:lwjgl-glfw:${lwjglVersion}")
+	//compileOnly("org.lwjgl:lwjgl-glfw:${lwjglVersion}")
 
-	modCompileOnly("io.github.moehreag:legacy-lwjgl3:${project.property("legacy_lwgjl3")}") {
-		exclude(group = "org.lwjgl", module = "lwjgl-glfw")
-		exclude(group = "org.lwjgl", module = "lwjgl-openal")
-		exclude(group = "org.lwjgl", module = "lwjgl-opengl")
-		exclude(group = "org.lwjgl", module = "lwjgl")
-		exclude(group = "net.fabricmc")
-		exclude(group = "org.javassist")
-	}
-	modLocalRuntime("io.github.moehreag:legacy-lwjgl3:${project.property("legacy_lwgjl3")}:all-remapped") {
-		exclude(group = "org.lwjgl", module = "lwjgl-glfw")
-		exclude(group = "org.lwjgl", module = "lwjgl-openal")
-		exclude(group = "org.lwjgl", module = "lwjgl-opengl")
-		exclude(group = "org.lwjgl", module = "lwjgl")
-		exclude(group = "net.fabricmc")
-		exclude(group = "org.javassist")
-	}
-
-	include(implementation("org.lwjgl", "lwjgl-tinyfd", "3.3.5"))
-	include(runtimeOnly("org.lwjgl", "lwjgl-tinyfd", "3.3.5", classifier = "natives-linux"))
-	include(runtimeOnly("org.lwjgl", "lwjgl-tinyfd", "3.3.5", classifier = "natives-windows"))
-	include(runtimeOnly("org.lwjgl", "lwjgl-tinyfd", "3.3.5", classifier = "natives-macos"))
-	include(runtimeOnly("org.lwjgl", "lwjgl-tinyfd", "3.3.5", classifier = "natives-linux-arm64"))
-	include(runtimeOnly("org.lwjgl", "lwjgl-tinyfd", "3.3.5", classifier = "natives-windows-arm64"))
-	include(runtimeOnly("org.lwjgl", "lwjgl-tinyfd", "3.3.5", classifier = "natives-macos-arm64"))
+	modCompileOnly("io.github.moehreag:legacy-lwjgl3:${project.property("legacy_lwgjl3")}")
+	modLocalRuntime("io.github.moehreag:legacy-lwjgl3:${project.property("legacy_lwgjl3")}:all-remapped")
 }
 
 configurations.configureEach {
@@ -107,6 +89,7 @@ tasks.runClient {
 		jvmArgs("-Dorg.lwjgl.glfw.libname=$glfwPath")
 	}
 	classpath(sourceSets.getByName("test").runtimeClasspath)
+	jvmArgs("-XX:+AllowEnhancedClassRedefinition")
 }
 
 tasks.withType(JavaCompile::class).configureEach {
@@ -156,7 +139,7 @@ modrinth {
 	versionNumber = "${project.version}"
 	versionType = "release"
 	uploadFile = tasks.remapJar.get()
-	gameVersions.set(listOf("${project.property("minecraft_18")}"))
+	gameVersions.set(listOf(minecraftVersion))
 	loaders.set(listOf("fabric", "quilt"))
 	additionalFiles.set(listOf(tasks.remapSourcesJar))
 	dependencies {
