@@ -142,11 +142,13 @@ public class AxolotlClientWaypoints implements ClientModInitializer {
 			.toList();
 	}
 
-	private static String getB64(String s) {
-		return new String(Base64.getUrlEncoder().encode(s.getBytes(StandardCharsets.UTF_8)));
+	public static Path getCurrentStorageDir() {
+		var mc = Minecraft.getInstance();
+		return getCurrentWorldStorageDir()
+			.resolve(getB64(mc.level.dimension().location().toString()));
 	}
 
-	public static Path getCurrentStorageDir() {
+	public static Path getCurrentWorldStorageDir() {
 		var mc = Minecraft.getInstance();
 		String str;
 		if (mc.getSingleplayerServer() == null) {
@@ -154,8 +156,11 @@ public class AxolotlClientWaypoints implements ClientModInitializer {
 		} else {
 			str = ((MinecraftServerAccessor) mc.getSingleplayerServer()).getStorageSource().getLevelId();
 		}
-		return AxolotlClientWaypoints.MOD_STORAGE_DIR.resolve(getB64(str))
-			.resolve(getB64(mc.level.dimension().location().toString()));
+		return AxolotlClientWaypoints.MOD_STORAGE_DIR.resolve(getB64(str));
+	}
+
+	private static String getB64(String s) {
+		return new String(Base64.getUrlEncoder().encode(s.getBytes(StandardCharsets.UTF_8)));
 	}
 
 	public static boolean playerHasOp() {

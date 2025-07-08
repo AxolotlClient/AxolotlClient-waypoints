@@ -22,9 +22,13 @@
 
 package io.github.axolotlclient.waypoints.mixin;
 
+import com.mojang.blaze3d.vertex.PoseStack;
 import io.github.axolotlclient.waypoints.AxolotlClientWaypoints;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GameRenderer;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -32,9 +36,13 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(GameRenderer.class)
 public class GameRendererMixin {
 
-	@Inject(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/Minecraft;getMainRenderTarget()Lcom/mojang/blaze3d/pipeline/RenderTarget;"))
-	private void renderWaypoints(float partialTicks, long nanoTime, boolean renderLevel, CallbackInfo ci) {
-		AxolotlClientWaypoints.WAYPOINT_RENDERER.render(partialTicks);
+	@Shadow
+	@Final
+	Minecraft minecraft;
+
+	@Inject(method = "renderLevel", at = @At(value = "FIELD", target = "Lnet/minecraft/client/renderer/GameRenderer;renderHand:Z"))
+	private void render(float partialTicks, long finishTimeNano, PoseStack poseStack, CallbackInfo ci) {
+		AxolotlClientWaypoints.WAYPOINT_RENDERER.render(poseStack, minecraft.renderBuffers().bufferSource());
 	}
 
 }

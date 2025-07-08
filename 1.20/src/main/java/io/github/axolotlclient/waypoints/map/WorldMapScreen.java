@@ -370,12 +370,12 @@ public class WorldMapScreen extends Screen {
 		addRenderableWidget(new ImageButton(4, height - 20, 16, 16, new WidgetSprites(OPTIONS_SPRITE, OPTIONS_SPRITE, OPTIONS_HOVERED_SPRITE),
 			btn -> minecraft.setScreen(AxolotlClientWaypoints.createOptionsScreen(this)), AxolotlClientWaypoints.tr("options")));
 		var slider = addRenderableWidget(new AbstractSliderButton(width - 150, 20, 150, 20, AxolotlClientWaypoints.tr("player_y"), 0) {
-			final int min = minecraft.level.getMinBuildHeight() - 1;
-			final int max = minecraft.level.getMaxBuildHeight() + 1;
+			final int min = minecraft.level.getMinBuildHeight();
+			final int max = minecraft.level.getMaxBuildHeight()+1;
 
 			@Override
 			protected void updateMessage() {
-				if (value == 0) {
+				if (value == 0 || Math.floor((max - min) * value) == 0) {
 					setMessage(AxolotlClientWaypoints.tr("player_y"));
 				} else {
 					setMessage(Component.literal(String.valueOf(caveY - 1)));
@@ -386,10 +386,10 @@ public class WorldMapScreen extends Screen {
 			protected void applyValue() {
 				caveY = (int) (min + (max - min) * value);
 				atSurface = false;
-				if (value == 0) {
+				if (value == 0 || Math.floor((max - min) * value) == 0) {
 					collectPlayerYData();
 				}
-				minecraft.submit(() -> tiles.values().forEach(t -> t.update(caveY, atSurface, minecraft.level)));
+				CompletableFuture.runAsync(() -> tiles.values().forEach(t -> t.update(caveY, atSurface, minecraft.level)));
 			}
 		});
 		addRenderableWidget(new DropdownButton(width - 20, 0, 20, 20,
@@ -462,7 +462,6 @@ public class WorldMapScreen extends Screen {
 	}
 
 	private static Path getCurrentLevelMapSaveDir() {
-
 		return AxolotlClientWaypoints.getCurrentStorageDir().resolve("worldmap");
 	}
 
@@ -519,6 +518,7 @@ public class WorldMapScreen extends Screen {
 		public void release() {
 			if (tile != null) {
 				tile.release();
+				tile = null;
 			}
 		}
 

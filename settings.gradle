@@ -33,8 +33,8 @@ include 'common'
 
 System.out.println("Adding submodules..")
 
-//optional '1.8.9'
-//optional '1.20'
+optional '1.8.9'
+optional '1.20'
 optional '1.21'
 optional '1.21.7'
 

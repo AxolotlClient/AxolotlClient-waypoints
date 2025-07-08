@@ -392,7 +392,7 @@ public class WorldMapScreen extends Screen {
 				if (value == 0) {
 					collectPlayerYData();
 				}
-				minecraft.submit(() -> tiles.values().forEach(t -> t.update(caveY, atSurface, minecraft.level)));
+				CompletableFuture.runAsync(() -> tiles.values().forEach(t -> t.update(caveY, atSurface, minecraft.level)));
 			}
 		});
 		addRenderableWidget(new DropdownButton(width - 20, 0, 20, 20,
@@ -527,6 +527,7 @@ public class WorldMapScreen extends Screen {
 		public void release() {
 			if (tile != null) {
 				tile.release();
+				tile = null;
 			}
 		}
 
