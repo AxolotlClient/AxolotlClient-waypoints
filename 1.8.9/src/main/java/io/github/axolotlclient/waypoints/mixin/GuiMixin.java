@@ -25,7 +25,6 @@ package io.github.axolotlclient.waypoints.mixin;
 import io.github.axolotlclient.waypoints.AxolotlClientWaypoints;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GameGui;
-import net.minecraft.client.render.Window;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -45,8 +44,8 @@ public class GuiMixin {
 		AxolotlClientWaypoints.MINIMAP.updateMapView();
 	}
 
-	@Inject(method = "renderVignette", at = @At("TAIL"))
-	private void renderHud(float f, Window window, CallbackInfo ci) {
+	@Inject(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/ClientPlayerInteractionManager;isInSpectatorMode()Z", ordinal = 0))
+	private void renderHud(float f, CallbackInfo ci) {
 		AxolotlClientWaypoints.WAYPOINT_RENDERER.renderWaypoints(f);
 		AxolotlClientWaypoints.MINIMAP.renderMapOverlay();
 	}

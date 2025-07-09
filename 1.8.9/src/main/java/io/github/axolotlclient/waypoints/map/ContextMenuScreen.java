@@ -70,10 +70,10 @@ public class ContextMenuScreen extends io.github.axolotlclient.AxolotlClientConf
 		int lastY = posY;
 		List<ClickableWidget> widgets = type.build(minecraft, parent);
 		for (ClickableWidget clickableWidget : widgets) {
-			clickableWidget.setPosition(posX, lastY);
+			clickableWidget.setPosition(posX, clickableWidget.getY()+ lastY);
 			clickableWidget.setWidth(100);
 			clickableWidget.setHeight(12);
-			lastY += clickableWidget.getHeight();
+			lastY = clickableWidget.getY()+ clickableWidget.getHeight();
 			addDrawableChild(clickableWidget);
 		}
 
@@ -141,7 +141,7 @@ public class ContextMenuScreen extends io.github.axolotlclient.AxolotlClientConf
 	}
 
 	public sealed interface Type permits Type.Map, Type.Waypoint {
-		record Map(int dimension, int worldPosX, int worldPosY, int worldPosZ) implements Type {
+		record Map(String dimension, int worldPosX, int worldPosY, int worldPosZ) implements Type {
 
 			@Override
 			public List<ClickableWidget> build(Minecraft minecraft, Screen parent) {
@@ -149,9 +149,9 @@ public class ContextMenuScreen extends io.github.axolotlclient.AxolotlClientConf
 				entries.add(new TitleWidget(0, 4, 0, 0, AxolotlClientWaypoints.tr("position", String.valueOf(worldPosX), String.valueOf(worldPosY), String.valueOf(worldPosZ)), minecraft.textRenderer));
 				entries.add(new VanillaButtonWidget(0, 8, 0, 0, AxolotlClientWaypoints.tr("create_waypoint"), btn ->
 					minecraft.openScreen(new CreateWaypointScreen(parent, worldPosX + 0.5f, worldPosY, worldPosZ + 0.5f))));
-				if (AxolotlClientWaypoints.playerHasOp() && minecraft.world.dimension.getId() == dimension) {
+				if (AxolotlClientWaypoints.playerHasOp() && minecraft.world.dimension.getName().equals(dimension)) {
 					entries.add(new VanillaButtonWidget(0, 8, 0, 0, AxolotlClientWaypoints.tr("teleport_waypoint"), btn -> {
-						minecraft.player.sendChat("/teleport @s %s %s %s".formatted(worldPosX, worldPosY + 1, worldPosZ));
+						minecraft.player.sendChat("/tp %s %s %s".formatted(worldPosX, worldPosY + 1, worldPosZ));
 						minecraft.openScreen(null);
 					}));
 				}
@@ -168,7 +168,7 @@ public class ContextMenuScreen extends io.github.axolotlclient.AxolotlClientConf
 					minecraft.openScreen(new EditWaypointScreen(parent, waypoint))));
 				if (AxolotlClientWaypoints.playerHasOp()) {
 					entries.add(new VanillaButtonWidget(0, 8, 0, 0, AxolotlClientWaypoints.tr("teleport_waypoint"), btn -> {
-						minecraft.player.sendChat("run teleport @s %s %s %s".formatted(waypoint.x(), waypoint.y() + 1, waypoint.z()));
+						minecraft.player.sendChat("/tp %s %s %s".formatted(waypoint.x(), waypoint.y() + 1, waypoint.z()));
 						minecraft.openScreen(null);
 					}));
 				}

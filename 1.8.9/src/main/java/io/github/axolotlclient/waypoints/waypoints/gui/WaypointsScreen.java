@@ -49,10 +49,8 @@ public class WaypointsScreen extends io.github.axolotlclient.AxolotlClientConfig
 
 	@Override
 	public void init() {
-
-
 		WaypointsList entries = new WaypointsList(minecraft, height, width, height - 60 - 33, 60, 25);
-
+		addDrawableChild(entries);
 
 		var search = addDrawableChild(new TextFieldWidget(textRenderer, width / 2 - 100, 60 / 2 - 37 / 2 + 9 + 8, 200, 20, AxolotlClientWaypoints.tr("waypoint_search")));
 		search.setHint(AxolotlClientWaypoints.tr("waypoint_search"));

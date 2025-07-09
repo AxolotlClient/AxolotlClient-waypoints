@@ -134,16 +134,18 @@ public class AxolotlClientWaypoints implements ClientModInitializer {
 
 	public static List<Waypoint> getCurrentWaypoints(boolean world, boolean dimension) {
 		var mc = Minecraft.getInstance();
-		String str;
-		if (mc.getCurrentServerEntry() != null) {
-			str = mc.getCurrentServerEntry().address;
-		} else if (mc.getServer() != null) {
-			str = mc.getServer().getWorldSaveName();
-		} else {
-			return Collections.emptyList();
+		String str = null;
+		if (world) {
+			if (mc.getCurrentServerEntry() != null) {
+				str = mc.getCurrentServerEntry().address;
+			} else if (mc.getServer() != null) {
+				str = mc.getServer().getWorldSaveName();
+			} else {
+				return Collections.emptyList();
+			}
 		}
 		var player = mc.player;
-		return WAYPOINT_STORAGE.getCurrentlyAvailableWaypoints(str, String.valueOf(mc.world.dimension.getId())).stream()
+		return WAYPOINT_STORAGE.getCurrentlyAvailableWaypoints(str, dimension ? String.valueOf(mc.world.dimension.getName()) : null).stream()
 			.sorted(Comparator.comparingDouble(w -> w.squaredDistTo(player.x, player.y, player.z)))
 			.toList();
 	}
@@ -155,7 +157,7 @@ public class AxolotlClientWaypoints implements ClientModInitializer {
 	public static Path getCurrentStorageDir() {
 		var mc = Minecraft.getInstance();
 		return getCurrentWorldStorageDir()
-			.resolve(getB64(String.valueOf(mc.world.dimension.getId())));
+			.resolve(getB64(mc.world.dimension.getName()));
 	}
 
 	public static Path getCurrentWorldStorageDir() {

@@ -25,6 +25,8 @@ package io.github.axolotlclient.waypoints.waypoints;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.mojang.blaze3d.platform.GlStateManager;
+import com.mojang.blaze3d.vertex.BufferBuilder;
+import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.Tessellator;
 import io.github.axolotlclient.waypoints.AxolotlClientWaypoints;
 import io.github.axolotlclient.waypoints.mixin.GameRendererAccessor;
@@ -32,9 +34,9 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiElement;
 import net.minecraft.client.render.Window;
 import net.minecraft.entity.Entity;
-import net.minecraft.util.math.Vec3d;
 import org.joml.Matrix4f;
 import org.joml.Quaternionf;
+import org.joml.Vector3d;
 import org.joml.Vector4f;
 
 public class WaypointRenderer {
@@ -44,8 +46,7 @@ public class WaypointRenderer {
 	private final Matrix4f view = new Matrix4f();
 	private final Vector4f viewProj = new Vector4f();
 
-
-	public void render() {
+	public void render(float f) {
 		if (!AxolotlClientWaypoints.renderWaypoints.get()) return;
 		if (!AxolotlClientWaypoints.renderWaypointsInWorld.get()) return;
 		if (minecraft.world == null) return;
@@ -54,46 +55,64 @@ public class WaypointRenderer {
 
 		var cam = minecraft.getCamera();
 
+		GlStateManager.color3f(1, 1, 1);
 		GlStateManager.pushMatrix();
-		var camPos = cam.getSourcePos();
+
+		var camPos = new Vector3d(cam.x, cam.y, cam.z);
+		var prevCamPos = new Vector3d(cam.prevTickX, cam.prevTickY, cam.prevTickZ);
+		camPos.sub(prevCamPos).mul(f).add(prevCamPos);
+
+		GlStateManager.depthMask(false);
+		GlStateManager.disableDepthTest();
 		var guiScale = new Window(minecraft).getScale();
 
 		for (Waypoint waypoint : AxolotlClientWaypoints.getCurrentWaypoints()) {
-			if (waypoint.closerToThan(camPos.x, camPos.y, camPos.z, CUTOFF_DIST / guiScale)) {
+			if (waypoint.closerToThan(camPos.x, camPos.y + cam.getEyeHeight(), camPos.z, CUTOFF_DIST / guiScale)) {
 				profiler.push(waypoint.name());
-				renderWaypoint(waypoint, camPos, cam);
+				renderWaypoint(waypoint, camPos);
 				profiler.pop();
 			}
 		}
 
+		GlStateManager.depthMask(true);
+		GlStateManager.enableDepthTest();
 		GlStateManager.popMatrix();
 	}
 
-	private void renderWaypoint(Waypoint waypoint, Vec3d camPos, Entity cam) {
+	private void renderWaypoint(Waypoint waypoint, Vector3d camPos) {
 		GlStateManager.pushMatrix();
-		GlStateManager.translated(waypoint.x() - camPos.x, waypoint.y() - camPos.y, waypoint.z() - camPos.z);
+		GlStateManager.translated(waypoint.x() - camPos.x, waypoint.y() - (camPos.y), waypoint.z() - camPos.z);
 		var dispatcher = minecraft.getEntityRenderDispatcher();
 		GlStateManager.rotatef(-dispatcher.cameraYaw, 0.0F, 1.0F, 0.0F);
 		GlStateManager.rotatef(dispatcher.cameraPitch, 1.0F, 0.0F, 0.0F);
 		float scale = 0.04F;
-		GlStateManager.scalef(scale, -scale, scale);
+		GlStateManager.scalef(-scale, -scale, scale);
+		GlStateManager.enableBlend();
 		int textWidth = minecraft.textRenderer.getWidth(waypoint.display());
 		int width = textWidth + Waypoint.displayXOffset() * 2;
 		int textHeight = minecraft.textRenderer.fontHeight;
 		int height = textHeight + Waypoint.displayYOffset() * 2;
-		drawFontBatch(waypoint.display(), -textWidth / 2f, -textHeight / 2f);
 		fillRect(-width / 2f, -height / 2f, -0.1f, width / 2f, height / 2f, waypoint.color().toInt());
+		drawFontBatch(waypoint.display(), -textWidth / 2f, -textHeight / 2f);
 		GlStateManager.popMatrix();
 	}
 
 	private void fillRect(float x, float y, float z, float x2, float y2, int color) {
-		var buf = Tessellator.getInstance().getBuilder();
-		buf.vertex(x, y, z).nextVertex();
-		buf.vertex(x, y2, z).nextVertex();
-		buf.vertex(x2, y2, z).nextVertex();
-		buf.vertex(x2, y, z).nextVertex();
-		buf.setQuadColor(color);
-		Tessellator.getInstance().end();
+		Tessellator tessellator = Tessellator.getInstance();
+		BufferBuilder bufferBuilder = tessellator.getBuilder();
+		GlStateManager.enableBlend();
+		GlStateManager.disableTexture();
+		GlStateManager.blendFuncSeparate(770, 771, 1, 0);
+		GlStateManager.color4f((color >> 16 & 0xFF) / 255.0F, (color >> 8 & 0xFF) / 255.0F, (color & 0xFF) / 255.0F, (color >> 24 & 0xFF) / 255.0F);
+		bufferBuilder.begin(7, DefaultVertexFormat.POSITION);
+		bufferBuilder.vertex(x, y2, z).nextVertex();
+		bufferBuilder.vertex(x2, y2, z).nextVertex();
+		bufferBuilder.vertex(x2, y, z).nextVertex();
+		bufferBuilder.vertex(x, y, z).nextVertex();
+		tessellator.end();
+		GlStateManager.enableTexture();
+		GlStateManager.color3f(1, 1, 1);
+		GlStateManager.disableBlend();
 	}
 
 	private void drawFontBatch(String text, float x, float y) {
@@ -133,13 +152,15 @@ public class WaypointRenderer {
 		int height = textHeight + Waypoint.displayYOffset() * 2;
 
 		viewProj.set(waypoint.x(), waypoint.y(), waypoint.z(), 1);
-		view.rotation(new Quaternionf().rotationYXZ(-camera.getHeadYaw() * (float) (Math.PI / 180.0), camera.pitch * (float) (Math.PI / 180.0), 0.0F)).translate((float) -camera.x, (float) -camera.y, (float) -camera.z);
+		var dispatcher = minecraft.getEntityRenderDispatcher();
+		var camPos = camera.getEyePosition(tick);
+		view.rotation(new Quaternionf()
+			.rotationYXZ(-dispatcher.cameraYaw * (float) (Math.PI / 180.0), dispatcher.cameraPitch * (float) (Math.PI / 180.0), 0.0F)
+			.rotateY((float) -(Math.PI)).invert()).translate((float) -camPos.x, (float) -camPos.y, (float) -camPos.z);
 
 		Matrix4f projection = getProjectionMatrix(fov);
 		projection.mul(view);
 		viewProj.mul(projection);
-
-		var camPos = camera.getSourcePos();
 
 		if (AxolotlClientWaypoints.renderOutOfViewWaypointsOnScreenEdge.get()) {
 			viewProj.w = Math.max(Math.abs(viewProj.x()), Math.max(Math.abs(viewProj.y()), viewProj.w()));

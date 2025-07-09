@@ -47,10 +47,10 @@ public class DropdownButton extends ButtonWidget {
 	protected void drawWidget(int mouseX, int mouseY, float partialTick) {
 		if (state) {
 			Minecraft.getInstance().getTextureManager().bind(isHovered() ? ARROW_UP_HIGHLIGHTED : ARROW_UP);
-			drawTexture(getX(), getY(), getWidth(), getHeight(), getWidth(), getHeight());
+			drawTexture(getX(), getY(), 0, 0, getWidth(), getHeight(), getWidth(), getHeight());
 		} else {
 			Minecraft.getInstance().getTextureManager().bind(isHovered() ? ARROW_DOWN_HIGHLIGHTED : ARROW_DOWN);
-			drawTexture(getX(), getY(), getWidth(), getHeight(), getWidth(), getHeight());
+			drawTexture(getX(), getY(), 0, 0, getWidth(), getHeight(), getWidth(), getHeight());
 		}
 	}
 

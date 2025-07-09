@@ -22,7 +22,6 @@
 
 package io.github.axolotlclient.waypoints.map;
 
-import java.nio.FloatBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -49,10 +48,8 @@ import net.minecraft.resource.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.chunk.WorldChunk;
-import org.joml.Matrix4f;
 import org.joml.Matrix4fStack;
 import org.joml.Vector3f;
-import org.lwjgl.opengl.GL11;
 
 public class Minimap {
 
@@ -73,7 +70,7 @@ public class Minimap {
 	private DynamicTexture tex;
 	private int x, y;
 	private int mapCenterX, mapCenterZ;
-	private final Matrix4fStack matrixStack = new Matrix4fStack();
+	private final Matrix4fStack matrixStack = new Matrix4fStack(5);
 
 	private final Minecraft minecraft = Minecraft.getInstance();
 
@@ -158,13 +155,6 @@ public class Minimap {
 		GlStateManager.popMatrix();
 	}
 
-	public static Matrix4f getGlMatrix() {
-		var array = new float[16];
-		var buf = FloatBuffer.wrap(array);
-		GL11.glGetFloat(GL11.glGetInteger(GL11.GL_MATRIX_MODE), buf);
-		return new Matrix4f(array[0], array[1], array[2], array[3], array[4], array[5], array[6], array[7], array[8], array[9], array[10], array[11], array[12], array[13], array[14], array[15]);
-	}
-
 	private void renderMapWaypoints() {
 		if (!AxolotlClientWaypoints.renderWaypoints.get()) return;
 		matrixStack.pushMatrix();
@@ -184,7 +174,7 @@ public class Minimap {
 				matrixStack.scale((float) Math.sqrt(2), (float) Math.sqrt(2), 1);
 				matrixStack.scale(mapScale.get(), mapScale.get(), 1);
 				if (!lockMapToNorth.get()) {
-					matrixStack.rotate(-(minecraft.player.headYaw + 180), 0, 0, 1);
+					matrixStack.rotate((float) -Math.toRadians(minecraft.player.headYaw + 180), 0, 0, 1);
 				}
 				matrixStack.translate(posX, posY, 1);
 				matrixStack.transformPosition(pos);
@@ -197,6 +187,7 @@ public class Minimap {
 				GlStateManager.translatef(pos.x, pos.y, pos.z());
 			}
 
+			GlStateManager.color3f(1, 1, 1);
 			int textWidth = minecraft.textRenderer.getWidth(waypoint.display());
 			int textHeight = minecraft.textRenderer.fontHeight;
 			GuiElement.fill(-(textWidth / 2) - Waypoint.displayXOffset(), -(textHeight / 2) - Waypoint.displayYOffset(), (textWidth / 2) + Waypoint.displayXOffset(), (textHeight / 2) + Waypoint.displayYOffset(), waypoint.color().toInt());

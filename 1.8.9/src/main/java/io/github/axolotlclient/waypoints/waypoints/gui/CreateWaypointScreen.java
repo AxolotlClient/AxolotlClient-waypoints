@@ -37,7 +37,6 @@ import io.github.axolotlclient.AxolotlClientConfig.impl.ui.vanilla.widgets.Strin
 import io.github.axolotlclient.AxolotlClientConfig.impl.ui.vanilla.widgets.VanillaButtonWidget;
 import io.github.axolotlclient.AxolotlClientConfig.impl.util.DrawUtil;
 import io.github.axolotlclient.waypoints.AxolotlClientWaypoints;
-import io.github.axolotlclient.waypoints.mixin.MinecraftServerAccessor;
 import io.github.axolotlclient.waypoints.waypoints.Waypoint;
 import io.github.axolotlclient.waypoints.waypoints.gui.util.CycleButton;
 import io.github.axolotlclient.waypoints.waypoints.gui.util.StringWidget;
@@ -52,6 +51,8 @@ public class CreateWaypointScreen extends io.github.axolotlclient.AxolotlClientC
 	private final Screen parent;
 	private double x, y, z;
 	private ButtonWidget create;
+	private final ColorOption color = new ColorOption("", Colors.GREEN.withAlpha(127));
+	private String world, dimension, name, display;
 
 	public CreateWaypointScreen(Screen screen) {
 		this(screen, Minecraft.getInstance().getCamera());
@@ -78,7 +79,6 @@ public class CreateWaypointScreen extends io.github.axolotlclient.AxolotlClientC
 	@Override
 	public void init() {
 		boolean singleplayer = minecraft.getServer().isSingleplayer();
-		ColorOption color = new ColorOption("", Colors.GREEN.withAlpha(127));
 
 		var posTitle = addDrawableChild(new StringWidget(AxolotlClientWaypoints.tr("waypoint_position"), textRenderer)).alignCenter();
 		posTitle.setWidth(width);
@@ -96,16 +96,24 @@ public class CreateWaypointScreen extends io.github.axolotlclient.AxolotlClientC
 		} else {
 			world.setText(minecraft.getCurrentServerEntry().address);
 		}
-		world.active = false;
+		world.setEditable(false);
+		if (this.world != null) {
+			world.setText(this.world);
+		}
+		world.setChangedListener(s -> this.world = s);
 		Supplier<String> dimensionSupplier;
 		if (singleplayer) {
-			StringArrayOption dimensions = new StringArrayOption("", Arrays.stream(minecraft.getServer().worlds).map(k -> k.dimension.getName()).toArray(String[]::new), minecraft.world.dimension.getName());
+			StringArrayOption dimensions = new StringArrayOption("", Arrays.stream(minecraft.getServer().worlds).map(k -> k.dimension.getName()).toArray(String[]::new), dimension != null ? dimension : minecraft.world.dimension.getName());
 			addDrawableChild(new StringArrayWidget(dimensionLabel.getX() + dimensionLabel.getWidth() + 4, worldLabel.getY(), 150, 20, dimensions));
 			dimensionSupplier = dimensions::get;
 		} else {
 			var dimension = addDrawableChild(new TextFieldWidget(textRenderer, dimensionLabel.getX() + dimensionLabel.getWidth() + 4, worldLabel.getY(), 150, 20, AxolotlClientWaypoints.tr("waypoint_position_dimension")));
 			dimension.setText(minecraft.world.dimension.getName());
 			dimensionSupplier = dimension::getText;
+			if (this.dimension != null) {
+				dimension.setText(this.dimension);
+			}
+			dimension.setChangedListener(s -> this.dimension = s);
 		}
 
 		var xLabel = addDrawableChild(new StringWidget(AxolotlClientWaypoints.tr("waypoint_position.x_label"), textRenderer));
@@ -114,7 +122,7 @@ public class CreateWaypointScreen extends io.github.axolotlclient.AxolotlClientC
 		yLabel.setHeight(20);
 		var zLabel = addDrawableChild(new StringWidget(AxolotlClientWaypoints.tr("waypoint_position.z_label"), textRenderer));
 		zLabel.setHeight(20);
-		xLabel.setPosition(width / 2 - (xLabel.getWidth() + 4 + yLabel.getWidth() + 4 + zLabel.getWidth() + (75+4) * 3)/2, worldLabel.getY() + 20 + 4);
+		xLabel.setPosition(width / 2 - (xLabel.getWidth() + 4 + yLabel.getWidth() + 4 + zLabel.getWidth() + (75 + 4) * 3) / 2, worldLabel.getY() + 20 + 4);
 		yLabel.setPosition(xLabel.getX() + xLabel.getWidth() + 4 + 75 + 4, xLabel.getY());
 		zLabel.setPosition(yLabel.getX() + yLabel.getWidth() + 4 + 75 + 4, yLabel.getY());
 		var x = addDrawableChild(new TextFieldWidget(textRenderer, xLabel.getX() + xLabel.getWidth() + 4, xLabel.getY(), 75, 20, AxolotlClientWaypoints.tr("waypoint_position.x")));
@@ -152,24 +160,29 @@ public class CreateWaypointScreen extends io.github.axolotlclient.AxolotlClientC
 		var nameLabel = addDrawableChild(new StringWidget(AxolotlClientWaypoints.tr("waypoint_display.name_label"), textRenderer));
 		var displayLabel = addDrawableChild(new StringWidget(AxolotlClientWaypoints.tr("waypoint_display.display_label"), textRenderer));
 		nameLabel.setHeight(20);
-		nameLabel.setPosition(width / 2 - (nameLabel.getWidth() + 4 + displayLabel.getWidth() + 4 + 100 + 4 + 50) / 2, displayTitle.getY() + 9 + 4);
+		nameLabel.setPosition(width / 2 - (nameLabel.getWidth() + 4 + displayLabel.getWidth() + 4 + 100 + 4 + 50 + 100 + 4) / 2, displayTitle.getY() + 9 + 4);
 		displayLabel.setHeight(20);
 		displayLabel.setPosition(nameLabel.getX() + nameLabel.getWidth() + 4 + 100 + 4, nameLabel.getY());
 		var name = addDrawableChild(new TextFieldWidget(textRenderer, nameLabel.getX() + nameLabel.getWidth() + 4, nameLabel.getY(), 100, 20, AxolotlClientWaypoints.tr("waypoint_display.name")));
 		var display = addDrawableChild(new TextFieldWidget(textRenderer, displayLabel.getX() + displayLabel.getWidth() + 4, displayLabel.getY(), 50, 20, AxolotlClientWaypoints.tr("waypoint_display.display")));
 		var lockButton = addDrawableChild(CycleButton.onOffBuilder(true)
-			.create(displayLabel.getX() + displayLabel.getWidth() + 4, displayLabel.getY(), 100, 20, AxolotlClientWaypoints.tr("waypoint_display.unlock_display"),
+			.create(display.getX() + display.getWidth() + 4, displayLabel.getY(), 100, 20, AxolotlClientWaypoints.tr("waypoint_display.unlock_display"),
 				(btn, v) -> display.active = !v));
 		name.setChangedListener(s -> {
+			this.name = s;
 			if (lockButton.getValue()) {
 				var d = s.trim();
 				display.setText(d.isEmpty() ? "" : d.substring(0, 1).toUpperCase(Locale.ROOT));
 			}
 		});
-		name.setText(AxolotlClientWaypoints.tra("default_waypoint_name"));
+		name.setText(this.name != null ? this.name : AxolotlClientWaypoints.tra("default_waypoint_name"));
 		display.active = false;
 		name.setMaxLength(150);
 		display.setMaxLength(10);
+		if (this.display != null) {
+			display.setText(this.display);
+		}
+		display.setChangedListener(s -> this.display = s);
 
 		var colorTitle = addDrawableChild(new StringWidget(AxolotlClientWaypoints.tr("waypoint_color"), textRenderer)).alignCenter();
 		colorTitle.setWidth(width);

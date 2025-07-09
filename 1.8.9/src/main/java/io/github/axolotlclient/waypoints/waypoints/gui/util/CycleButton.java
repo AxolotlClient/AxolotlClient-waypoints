@@ -6,7 +6,7 @@ import java.util.function.BooleanSupplier;
 import java.util.function.Function;
 
 import com.google.common.collect.ImmutableList;
-import io.github.axolotlclient.AxolotlClientConfig.impl.ui.ButtonWidget;
+import io.github.axolotlclient.AxolotlClientConfig.impl.ui.vanilla.widgets.VanillaButtonWidget;
 import lombok.Getter;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -15,7 +15,7 @@ import net.minecraft.locale.I18n;
 import org.jetbrains.annotations.Nullable;
 
 @Environment(EnvType.CLIENT)
-public class CycleButton<T> extends ButtonWidget {
+public class CycleButton<T> extends VanillaButtonWidget {
 	public static final BooleanSupplier DEFAULT_ALT_LIST_SELECTOR = Screen::isAltDown;
 	private static final List<Boolean> BOOLEAN_OPTIONS = ImmutableList.of(Boolean.TRUE, Boolean.FALSE);
 	private final String name;
@@ -187,7 +187,7 @@ public class CycleButton<T> extends ButtonWidget {
 			} else {
 				T object = this.initialValue != null ? this.initialValue : list.get(this.initialIndex);
 				String component = this.valueStringifier.apply(object);
-				String component2 = this.displayOnlyValue ? component : name+": "+ component;
+				String component2 = this.displayOnlyValue ? component : name + ": " + component;
 				return new CycleButton<>(
 					x,
 					y,

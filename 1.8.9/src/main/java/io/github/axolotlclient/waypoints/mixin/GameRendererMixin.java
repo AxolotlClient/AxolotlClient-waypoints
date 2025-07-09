@@ -32,9 +32,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(GameRenderer.class)
 public class GameRendererMixin {
 
-	@Inject(method = "render(FJ)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/Minecraft;getRenderTarget()Lcom/mojang/blaze3d/pipeline/RenderTarget;"))
-	private void renderWaypoints(float f, long l, CallbackInfo ci) {
-		AxolotlClientWaypoints.WAYPOINT_RENDERER.render();
+	@Inject(method = "render(IFJ)V", at = @At(value = "CONSTANT", args = "stringValue=hand"))
+	private void renderWaypoints(int i, float f, long l, CallbackInfo ci) {
+		AxolotlClientWaypoints.WAYPOINT_RENDERER.render(f);
 	}
 
 }

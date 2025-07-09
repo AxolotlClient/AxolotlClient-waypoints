@@ -76,11 +76,11 @@ public class WorldMapScreen extends Screen {
 	private float scale = 1f;
 	private boolean atSurface;
 	private int caveY;
-	private int dimension;
+	private String dimension;
 	private Waypoint hoveredWaypoint = null;
 	private boolean initializedOnce = false;
 	private final TextRenderer font = Minecraft.getInstance().textRenderer;
-	private final Matrix4fStack matrixStack = new Matrix4fStack();
+	private final Matrix4fStack matrixStack = new Matrix4fStack(16);
 
 	public WorldMapScreen() {
 		super(AxolotlClientWaypoints.tr("worldmap"));
@@ -121,7 +121,7 @@ public class WorldMapScreen extends Screen {
 		int arrowSize = 15;
 		GlStateManager.translatef(-arrowSize / 2f, -arrowSize / 2f, 0);
 		minecraft.getTextureManager().bind(Minimap.arrowLocation);
-		drawTexture(0, 0, arrowSize, arrowSize, arrowSize, arrowSize);
+		drawTexture(0, 0, 0, 0, arrowSize, arrowSize, arrowSize, arrowSize);
 		matrixStack.popMatrix();
 		GlStateManager.popMatrix();
 		super.render(mouseX, mouseY, partialTick);
@@ -232,7 +232,7 @@ public class WorldMapScreen extends Screen {
 		}
 
 		caveY = (int) (minecraft.player.y + 0.5);
-		dimension = level.dimension.getId();
+		dimension = level.dimension.getName();
 	}
 
 	private void createTiles() {
@@ -330,6 +330,9 @@ public class WorldMapScreen extends Screen {
 		}
 	}
 
+	private double dragMouseX;
+	private double dragMouseY;
+
 	@Override
 	public boolean mouseClicked(double mouseX, double mouseY, int button) {
 		if (!super.mouseClicked(mouseX, mouseY, button)) {
@@ -342,6 +345,9 @@ public class WorldMapScreen extends Screen {
 					minecraft.openScreen(new ContextMenuScreen(this, mouseX, mouseY, new ContextMenuScreen.Type.Map(dimension, worldX, getY(worldX, worldZ), worldZ)));
 				}
 				return true;
+			} else if (button == 0) {
+				dragMouseX = (mouseX  - dragOffset.x);
+				dragMouseY = (mouseY - dragOffset.y);
 			}
 			return false;
 		}
@@ -352,7 +358,7 @@ public class WorldMapScreen extends Screen {
 	public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
 		if (!super.mouseDragged(mouseX, mouseY, button, dragX, dragY)) {
 			if (button == 0) {
-				dragOffset.add((float) dragX, (float) dragY, 0);
+				dragOffset.set((float) (mouseX - dragMouseX), (float) (mouseY - dragMouseY), 0);
 				return true;
 			}
 			return false;
@@ -388,7 +394,7 @@ public class WorldMapScreen extends Screen {
 		int scroll = Mouse.getDWheel();
 		int x = Mouse.getEventX() * this.width / this.minecraft.width;
 		int y = this.height - Mouse.getEventY() * this.height / this.minecraft.height - 1;
-		if (hoveredElement(x, y).isEmpty()) {
+		if (hoveredElement(x, y).isEmpty() && scroll != 0) {
 			mouseScrolled(x, y, 0, scroll);
 		}
 	}
@@ -417,7 +423,7 @@ public class WorldMapScreen extends Screen {
 				if (value == 0) {
 					collectPlayerYData();
 				}
-				minecraft.submit(() -> tiles.values().forEach(t -> t.update(caveY, atSurface, minecraft.world)));
+				CompletableFuture.runAsync(() -> tiles.values().forEach(t -> t.update(caveY, atSurface, minecraft.world)));
 			}
 		});
 		addDrawableChild(new DropdownButton(width - 20, 0, 20, 20,
@@ -537,6 +543,7 @@ public class WorldMapScreen extends Screen {
 					drawTexture(0, 0, 0, 0, TILE_SIZE, TILE_SIZE, TILE_SIZE, TILE_SIZE);
 				}
 			}
+			matrixStack.popMatrix();
 			GlStateManager.popMatrix();
 		}
 
