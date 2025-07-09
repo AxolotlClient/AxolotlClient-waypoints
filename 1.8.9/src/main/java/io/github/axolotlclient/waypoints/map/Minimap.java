@@ -22,41 +22,38 @@
 
 package io.github.axolotlclient.waypoints.map;
 
+import java.nio.FloatBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import com.mojang.blaze3d.platform.NativeImage;
+import com.mojang.blaze3d.platform.GlStateManager;
 import io.github.axolotlclient.AxolotlClientConfig.api.options.OptionCategory;
 import io.github.axolotlclient.AxolotlClientConfig.api.util.Colors;
 import io.github.axolotlclient.AxolotlClientConfig.impl.options.BooleanOption;
 import io.github.axolotlclient.AxolotlClientConfig.impl.options.ColorOption;
 import io.github.axolotlclient.AxolotlClientConfig.impl.options.IntegerOption;
+import io.github.axolotlclient.AxolotlClientConfig.impl.util.DrawUtil;
 import io.github.axolotlclient.waypoints.AxolotlClientWaypoints;
 import io.github.axolotlclient.waypoints.util.ARGB;
 import io.github.axolotlclient.waypoints.waypoints.Waypoint;
-import net.minecraft.Util;
-import net.minecraft.client.DeltaTracker;
+import net.minecraft.block.Blocks;
+import net.minecraft.block.material.MapColor;
+import net.minecraft.block.state.BlockState;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.screens.inventory.EffectRenderingInventoryScreen;
-import net.minecraft.client.renderer.texture.DynamicTexture;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
-import net.minecraft.core.SectionPos;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.Mth;
-import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.chunk.ChunkAccess;
-import net.minecraft.world.level.chunk.status.ChunkStatus;
-import net.minecraft.world.level.levelgen.Heightmap;
-import net.minecraft.world.level.material.FluidState;
-import net.minecraft.world.level.material.MapColor;
+import net.minecraft.client.gui.GuiElement;
+import net.minecraft.client.render.Window;
+import net.minecraft.client.render.texture.DynamicTexture;
+import net.minecraft.resource.Identifier;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.MathHelper;
+import net.minecraft.world.chunk.WorldChunk;
+import org.joml.Matrix4f;
+import org.joml.Matrix4fStack;
 import org.joml.Vector3f;
+import org.lwjgl.opengl.GL11;
 
-@SuppressWarnings("DataFlowIssue")
 public class Minimap {
 
 	private static final ColorOption outlineColor = new ColorOption("outline_color", Colors.WHITE);
@@ -69,13 +66,14 @@ public class Minimap {
 	//public static final BooleanOption useTextureSampling = new BooleanOption("use_texture_sampling", false);
 	private static final OptionCategory minimap = OptionCategory.create("minimap");
 	final int radius = 64, size = radius * 2;
-	private static final ResourceLocation texLocation = AxolotlClientWaypoints.rl("minimap");
-	public static final ResourceLocation arrowLocation = AxolotlClientWaypoints.rl("arrow");
-	private final NativeImage pixels = new NativeImage(size, size, false);
+	private static final Identifier texLocation = AxolotlClientWaypoints.rl("minimap");
+	public static final Identifier arrowLocation = AxolotlClientWaypoints.rl("textures/gui/sprites/arrow.png");
+	private int[] pixels;
 	public long updateDuration = -1;
 	private DynamicTexture tex;
 	private int x, y;
 	private int mapCenterX, mapCenterZ;
+	private final Matrix4fStack matrixStack = new Matrix4fStack();
 
 	private final Minecraft minecraft = Minecraft.getInstance();
 
@@ -89,109 +87,129 @@ public class Minimap {
 	}
 
 	public void setup() {
-		minecraft.getTextureManager().register(texLocation, tex = new DynamicTexture(pixels));
-		pixels.fillRect(0, 0, pixels.getWidth(), pixels.getHeight(), ARGB.opaque(0));
-		this.x = minecraft.getWindow().getGuiScaledWidth() - size - 10;
+		minecraft.getTextureManager().register(texLocation, tex = new DynamicTexture(size, size));
+		pixels = tex.getPixels();
+		this.x = new Window(minecraft).getWidth() - size - 10;
 		this.y = 10;
 	}
 
-	public void renderMapOverlay(GuiGraphics guiGraphics, DeltaTracker deltaTracker) {
+	public void renderMapOverlay() {
 		if (!isEnabled()) {
 			return;
 		}
-		this.x = minecraft.getWindow().getGuiScaledWidth() - size - 10;
+		var guiWidth = new Window(minecraft).getWidth();
+		this.x = guiWidth - size - 10;
 		this.y = 10;
 		if (minecraft.isDemo()) {
 			this.y += 15;
 		}
-		if (!minecraft.player.getActiveEffects().isEmpty() && (minecraft.screen == null ||
+		/*if (!minecraft.player.getActiveEffects().isEmpty() && (minecraft.screen == null ||
 			!(this.minecraft.screen instanceof EffectRenderingInventoryScreen<?> effectRenderingInventoryScreen && effectRenderingInventoryScreen.canSeeEffects()))) {
 			if (minecraft.player.getActiveEffects().stream().anyMatch(e -> !e.getEffect().value().isBeneficial())) {
 				this.y += 26;
 			}
 			this.y += 20;
-		}
+		}*/
 		final int x = this.x;
 		final int y = this.y;
-		guiGraphics.pose().pushPose();
+		matrixStack.clear().pushMatrix();
+		GlStateManager.pushMatrix();
 		{
-			guiGraphics.enableScissor(x, y, x + size, y + size);
-			guiGraphics.pose().pushPose();
-			guiGraphics.pose().translate(x, y, 0);
-			guiGraphics.pose().translate(radius, radius, 0);
+			DrawUtil.pushScissor(x, y, size, size);
+			GlStateManager.pushMatrix();
+			GlStateManager.translatef(x, y, 0);
+			GlStateManager.translatef(radius, radius, 0);
 			if (!lockMapToNorth.get()) {
-				guiGraphics.pose().last().pose().rotate((float) -(((minecraft.player.getVisualRotationYInDegrees() + 180) / 180) * Math.PI), 0, 0, 1);
+				GlStateManager.rotatef(-(minecraft.player.getHeadYaw() + 180), 0, 0, 1);
 			}
-			guiGraphics.pose().scale((float) Math.sqrt(2), (float) Math.sqrt(2), 1);
-			guiGraphics.pose().scale(mapScale.get(), mapScale.get(), 1);
-			guiGraphics.pose().translate(-pixels.getWidth() / 2f, -pixels.getHeight() / 2f, 0);
+			GlStateManager.scalef((float) Math.sqrt(2), (float) Math.sqrt(2), 1);
+			GlStateManager.scalef(mapScale.get(), mapScale.get(), 1);
+			GlStateManager.translatef(-size / 2f, -size / 2f, 0);
 			float offX, offZ;
-			offX = -(float) (minecraft.player.getX() - mapCenterX);
-			offZ = -(float) (minecraft.player.getZ() - mapCenterZ);
-			guiGraphics.pose().translate(offX / mapScale.get(), offZ / mapScale.get(), 0);
-			guiGraphics.blit(texLocation, 0, 0, 0, 0, pixels.getWidth(), pixels.getHeight(), pixels.getWidth(), pixels.getHeight());
-			guiGraphics.pose().popPose();
-			guiGraphics.disableScissor();
+			offX = -(float) (minecraft.player.x - mapCenterX);
+			offZ = -(float) (minecraft.player.z - mapCenterZ);
+			GlStateManager.translatef(offX / mapScale.get(), offZ / mapScale.get(), 0);
+			minecraft.getTextureManager().bind(texLocation);
+			GuiElement.drawTexture(0, 0, 0, 0, size, size, size, size);
+			GlStateManager.popMatrix();
+			DrawUtil.popScissor();
 		}
 
 		if (minimapOutline.get()) {
-			guiGraphics.renderOutline(x, y, size, size, outlineColor.get().toInt());
+			DrawUtil.outlineRect(x, y, size, size, outlineColor.get().toInt());
 		}
 		if (showWaypoints.get()) {
-			renderMapWaypoints(guiGraphics);
+			renderMapWaypoints();
 		}
 
-		guiGraphics.pose().pushPose();
-		guiGraphics.pose().translate(x + radius, y + radius, 0);
+		GlStateManager.pushMatrix();
+		GlStateManager.translatef(x + radius, y + radius, 0);
 		if (lockMapToNorth.get()) {
-			guiGraphics.pose().last().pose().rotate((float) (((minecraft.player.getVisualRotationYInDegrees() + 180) / 180) * Math.PI), 0, 0, 1);
+			GlStateManager.rotatef(minecraft.player.getHeadYaw() + 180, 0, 0, 1);
 		}
-		guiGraphics.pose().scale(0.5f * arrowScale.get(), 0.5f * arrowScale.get(), 1);
+		GlStateManager.scalef(0.5f * arrowScale.get(), 0.5f * arrowScale.get(), 1);
 		int arrowSize = 15;
-		guiGraphics.pose().translate(-arrowSize / 2f, -arrowSize / 2f, 1);
-		guiGraphics.blitSprite(arrowLocation, 0, 0, arrowSize, arrowSize);
-		guiGraphics.pose().popPose();
+		GlStateManager.translatef(-arrowSize / 2f, -arrowSize / 2f, 1);
+		minecraft.getTextureManager().bind(arrowLocation);
+		GuiElement.drawTexture(0, 0, 0, 0, arrowSize, arrowSize, arrowSize, arrowSize);
+		GlStateManager.popMatrix();
 
-		guiGraphics.pose().popPose();
+		matrixStack.popMatrix();
+		GlStateManager.popMatrix();
 	}
 
-	private void renderMapWaypoints(GuiGraphics graphics) {
+	public static Matrix4f getGlMatrix() {
+		var array = new float[16];
+		var buf = FloatBuffer.wrap(array);
+		GL11.glGetFloat(GL11.glGetInteger(GL11.GL_MATRIX_MODE), buf);
+		return new Matrix4f(array[0], array[1], array[2], array[3], array[4], array[5], array[6], array[7], array[8], array[9], array[10], array[11], array[12], array[13], array[14], array[15]);
+	}
+
+	private void renderMapWaypoints() {
 		if (!AxolotlClientWaypoints.renderWaypoints.get()) return;
-		graphics.pose().pushPose();
+		matrixStack.pushMatrix();
+		GlStateManager.pushMatrix();
 		Vector3f pos = new Vector3f();
 		for (Waypoint waypoint : AxolotlClientWaypoints.getCurrentWaypoints()) {
-			graphics.pose().pushPose();
-			float posX = (float) (waypoint.x() - minecraft.player.getX());
-			float posY = (float) (waypoint.z() - minecraft.player.getZ());
+			matrixStack.pushMatrix();
+			GlStateManager.pushMatrix();
+			float posX = (float) (waypoint.x() - minecraft.player.x);
+			float posY = (float) (waypoint.z() - minecraft.player.z);
 
 			{
 				pos.zero();
-				graphics.pose().pushPose();
-				graphics.pose().translate(x, y, 0);
-				graphics.pose().translate(radius, radius, 0);
-				graphics.pose().scale((float) Math.sqrt(2), (float) Math.sqrt(2), 1);
-				graphics.pose().scale(mapScale.get(), mapScale.get(), 1);
+				matrixStack.pushMatrix();
+				matrixStack.translate(x, y, 0);
+				matrixStack.translate(radius, radius, 0);
+				matrixStack.scale((float) Math.sqrt(2), (float) Math.sqrt(2), 1);
+				matrixStack.scale(mapScale.get(), mapScale.get(), 1);
 				if (!lockMapToNorth.get()) {
-					graphics.pose().last().pose().rotate((float) -Math.toRadians(minecraft.player.getVisualRotationYInDegrees() + 180), 0, 0, 1);
+					matrixStack.rotate(-(minecraft.player.headYaw + 180), 0, 0, 1);
 				}
-				graphics.pose().translate(posX, posY, 1);
-				graphics.pose().last().pose().transformPosition(pos);
-				graphics.pose().popPose();
+				matrixStack.translate(posX, posY, 1);
+				matrixStack.transformPosition(pos);
+				matrixStack.popMatrix();
 			}
 
 			{
-				pos.x = Mth.clamp(pos.x, x, x + size);
-				pos.y = Mth.clamp(pos.y, y, y + size);
-				graphics.pose().last().pose().translate(pos);
+				pos.x = MathHelper.clamp(pos.x, x, x + size);
+				pos.y = MathHelper.clamp(pos.y, y, y + size);
+				GlStateManager.translatef(pos.x, pos.y, pos.z());
 			}
 
-			int textWidth = minecraft.font.width(waypoint.display());
-			int textHeight = minecraft.font.lineHeight;
-			graphics.fill(-(textWidth / 2) - Waypoint.displayXOffset(), -(textHeight / 2) - Waypoint.displayYOffset(), (textWidth / 2) + Waypoint.displayXOffset(), (textHeight / 2) + Waypoint.displayYOffset(), waypoint.color().toInt());
-			graphics.drawString(minecraft.font, waypoint.display(), -(textWidth / 2), -textHeight / 2, -1, false);
-			graphics.pose().popPose();
+			int textWidth = minecraft.textRenderer.getWidth(waypoint.display());
+			int textHeight = minecraft.textRenderer.fontHeight;
+			GuiElement.fill(-(textWidth / 2) - Waypoint.displayXOffset(), -(textHeight / 2) - Waypoint.displayYOffset(), (textWidth / 2) + Waypoint.displayXOffset(), (textHeight / 2) + Waypoint.displayYOffset(), waypoint.color().toInt());
+			minecraft.textRenderer.draw(waypoint.display(), -(textWidth / 2f), -textHeight / 2f, -1, false);
+			matrixStack.popMatrix();
+			GlStateManager.popMatrix();
 		}
-		graphics.pose().popPose();
+		matrixStack.popMatrix();
+		GlStateManager.popMatrix();
+	}
+
+	private static int blockToSectionCoord(int c) {
+		return c >> 4;
 	}
 
 	public void updateMapView() {
@@ -199,32 +217,31 @@ public class Minimap {
 			updateDuration = -1;
 			return;
 		}
-		long start = Util.getNanos();
-		int centerX = minecraft.player.getBlockX();
-		int centerZ = minecraft.player.getBlockZ();
+		long start = System.currentTimeMillis();
+		int centerX = (int) (minecraft.player.x + 0.5);
+		int centerZ = (int) (minecraft.player.z + 0.5);
 		mapCenterX = centerX;
 		mapCenterZ = centerZ;
-		int size = pixels.getWidth();
 		int texHalfWidth = size / 2;
 
-		BlockPos.MutableBlockPos mutableBlockPos = new BlockPos.MutableBlockPos();
-		BlockPos.MutableBlockPos mutableBlockPos2 = new BlockPos.MutableBlockPos();
+		BlockPos.Mutable mutableBlockPos = new BlockPos.Mutable();
+		BlockPos.Mutable mutableBlockPos2 = new BlockPos.Mutable();
 
-		var level = minecraft.level;
-		var centerChunk = level.getChunk(SectionPos.blockToSectionCoord(centerX), SectionPos.blockToSectionCoord(centerZ));
-		var surface = centerChunk.getHeight(Heightmap.Types.WORLD_SURFACE, centerX, centerZ);
+		var level = minecraft.world;
+		var centerChunk = level.getChunkAt(blockToSectionCoord(centerX), blockToSectionCoord(centerZ));
+		var surface = centerChunk.getHeight(centerX & 15, centerZ & 15);
 		mutableBlockPos.set(centerX, surface, centerZ);
 		int solidBlocksAbovePlayer = 0;
 		boolean atSurface = false;
-		if (level.dimensionType().hasCeiling()) {
-			atSurface = minecraft.player.getBlockY() >= level.dimensionType().logicalHeight();
-		} else if (surface + 1 <= minecraft.player.getBlockY()) {
+		if (level.dimension.isDark()) {
+			atSurface = (int) (minecraft.player.y + 0.5) >= level.getHeight();
+		} else if (surface + 1 <= (int) (minecraft.player.y + 0.5)) {
 			atSurface = true;
 		} else {
-			while (solidBlocksAbovePlayer <= 3 && surface > minecraft.player.getBlockY() && surface > level.getMinBuildHeight()) {
+			while (solidBlocksAbovePlayer <= 3 && surface > (int) (minecraft.player.y + 0.5) && surface > WorldMapScreen.MIN_BUILD_HEIGHT) {
 				BlockState state = centerChunk.getBlockState(mutableBlockPos);
-				mutableBlockPos.setY(surface--);
-				if (!(state.propagatesSkylightDown(level, mutableBlockPos.below()) || !state.canOcclude() || !state.isViewBlocking(level, mutableBlockPos))) {
+				mutableBlockPos.set(centerX, surface--, centerZ);
+				if (!(state.getBlock().isTranslucent() || !state.getBlock().isOpaque() || !state.getBlock().isViewBlocking())) {
 					solidBlocksAbovePlayer++;
 				}
 			}
@@ -240,61 +257,58 @@ public class Minimap {
 			for (int z = -1; z < size; z++) {
 				int chunkX = (centerX + x - texHalfWidth);
 				int chunkZ = (centerZ + z - texHalfWidth);
-				ChunkAccess levelChunk = level.getChunk(SectionPos.blockToSectionCoord(chunkX), SectionPos.blockToSectionCoord(chunkZ), ChunkStatus.FULL, false);
+				WorldChunk levelChunk = level.getChunkAt(blockToSectionCoord(chunkX), blockToSectionCoord(chunkZ));
 				if (levelChunk != null) {
 					int fluidDepth = 0;
 					double e = 0.0;
 					mutableBlockPos.set(chunkX, 0, chunkZ);
-					int y = levelChunk.getHeight(Heightmap.Types.WORLD_SURFACE, mutableBlockPos.getX(), mutableBlockPos.getZ()) + 1;
+					int y = levelChunk.getHeight(mutableBlockPos.getX() & 15, mutableBlockPos.getZ() & 15) + 1;
 					if (!atSurface) {
-						y = Math.min(y, minecraft.player.getBlockY());
+						y = Math.min(y, (int) (minecraft.player.y + 0.5));
 					}
 					BlockState blockState;
-					if (y <= level.getMinBuildHeight()) {
-						blockState = Blocks.AIR.defaultBlockState();
+					if (y <= WorldMapScreen.MIN_BUILD_HEIGHT) {
+						blockState = Blocks.AIR.defaultState();
 					} else {
 						do {
-							mutableBlockPos.setY(--y);
+							mutableBlockPos.set(chunkX, --y, chunkZ);
 							blockState = levelChunk.getBlockState(mutableBlockPos);
-						} while (blockState.getMapColor(level, mutableBlockPos) == MapColor.NONE && y > level.getMinBuildHeight());
+						} while (blockState.getBlock().getMapColor(blockState) == MapColor.AIR && y > WorldMapScreen.MIN_BUILD_HEIGHT);
 
-						if (y > level.getMinBuildHeight() && !blockState.getFluidState().isEmpty()) {
+						if (y > WorldMapScreen.MIN_BUILD_HEIGHT && blockState.getBlock().getMaterial().isLiquid()) {
 							int highestFullBlockY = y - 1;
-							mutableBlockPos2.set(mutableBlockPos);
+							mutableBlockPos2.set(mutableBlockPos.getX(), mutableBlockPos.getY(), mutableBlockPos.getZ());
 
 							BlockState blockState2;
 							do {
-								mutableBlockPos2.setY(highestFullBlockY--);
+								mutableBlockPos2.set(mutableBlockPos.getX(), highestFullBlockY--, mutableBlockPos.getZ());
 								blockState2 = levelChunk.getBlockState(mutableBlockPos2);
 								fluidDepth++;
-							} while (highestFullBlockY > level.getMinBuildHeight() && !blockState2.getFluidState().isEmpty());
-
-							FluidState fluidState = blockState.getFluidState();
-							blockState = !fluidState.isEmpty() && !blockState.isFaceSturdy(level, mutableBlockPos, Direction.UP) ? fluidState.createLegacyBlock() : blockState;
+							} while (highestFullBlockY > WorldMapScreen.MIN_BUILD_HEIGHT && blockState2.getBlock().getMaterial().isLiquid());
 						}
 					}
 
 					e += y;
-					var mapColor = blockState.getMapColor(level, mutableBlockPos);
+					var mapColor = blockState.getBlock().getMapColor(blockState);
 
-					MapColor.Brightness brightness;
+					int brightness;
 					if (mapColor == MapColor.WATER) {
 						double f = fluidDepth * 0.1 + (x + z & 1) * 0.2;
 						if (f < 0.5) {
-							brightness = MapColor.Brightness.HIGH;
+							brightness = 2;
 						} else if (f > 0.9) {
-							brightness = MapColor.Brightness.LOW;
+							brightness = 0;
 						} else {
-							brightness = MapColor.Brightness.NORMAL;
+							brightness = 1;
 						}
 					} else {
 						double f = (e - d) * 4.0 / (1 + 4) + ((x + z & 1) - 0.5) * 0.4;
 						if (f > 0.6) {
-							brightness = MapColor.Brightness.HIGH;
+							brightness = 2;
 						} else if (f < -0.6) {
-							brightness = MapColor.Brightness.LOW;
+							brightness = 0;
 						} else {
-							brightness = MapColor.Brightness.NORMAL;
+							brightness = 1;
 						}
 					}
 
@@ -311,15 +325,15 @@ public class Minimap {
 						}));
 					} else*/
 					{
-						int color = mapColor.calculateRGBColor(brightness);
-						if (z >= 0 && Integer.rotateRight(pixels.getPixelRGBA(x, z), 4) != color) {
-							pixels.setPixelRGBA(x, z, ARGB.opaque(color));
+						int color = mapColor.getColor(brightness);
+						if (z >= 0 && pixels[x + z * size] != color) {
+							pixels[x + z * size] = ARGB.opaque(color);
 							updated.set(true);
 						}
 					}
 				} else {
-					if (z >= 0 && Integer.rotateRight(pixels.getPixelRGBA(x, z), 4) != 0) {
-						pixels.setPixelRGBA(x, z, ARGB.opaque(0));
+					if (z >= 0 && pixels[x + z * size] != 0) {
+						pixels[x + z * size] = ARGB.opaque(0);
 						updated.set(true);
 					}
 				}
@@ -330,6 +344,6 @@ public class Minimap {
 				tex.upload();
 			}
 		});
-		updateDuration = Util.getNanos() - start;
+		updateDuration = System.currentTimeMillis() - start;
 	}
 }

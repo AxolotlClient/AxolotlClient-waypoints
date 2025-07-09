@@ -18,7 +18,7 @@
 		"sources": "https://github.com/AxolotlClient/AxolotlClient-waypoints/"
 	},
 	"license": "LGPL-3.0-or-later",
-	"icon": "assets/axolotlclient/icon.png",
+	"icon": "assets/axolotlclient_waypoints/icon.png",
 	"accessWidener": "axolotlclient-waypoints.accesswidener",
 	"environment": "client",
 	"entrypoints": {

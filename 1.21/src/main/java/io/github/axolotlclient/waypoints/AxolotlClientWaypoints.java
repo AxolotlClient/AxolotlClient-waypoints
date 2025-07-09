@@ -129,6 +129,10 @@ public class AxolotlClientWaypoints implements ClientModInitializer {
 	}
 
 	public static List<Waypoint> getCurrentWaypoints() {
+		return getCurrentWaypoints(true, true);
+	}
+
+	public static List<Waypoint> getCurrentWaypoints(boolean world, boolean dimension) {
 		var mc = Minecraft.getInstance();
 		String str;
 		if (mc.getCurrentServer() != null) {

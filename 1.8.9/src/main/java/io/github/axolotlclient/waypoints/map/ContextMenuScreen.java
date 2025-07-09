@@ -24,31 +24,30 @@ package io.github.axolotlclient.waypoints.map;
 
 import java.util.List;
 
+import io.github.axolotlclient.AxolotlClientConfig.api.util.Color;
 import io.github.axolotlclient.AxolotlClientConfig.api.util.Colors;
+import io.github.axolotlclient.AxolotlClientConfig.api.util.Rectangle;
+import io.github.axolotlclient.AxolotlClientConfig.impl.ui.ClickableWidget;
+import io.github.axolotlclient.AxolotlClientConfig.impl.ui.vanilla.widgets.VanillaButtonWidget;
+import io.github.axolotlclient.AxolotlClientConfig.impl.util.DrawUtil;
 import io.github.axolotlclient.waypoints.AxolotlClientWaypoints;
 import io.github.axolotlclient.waypoints.waypoints.gui.CreateWaypointScreen;
 import io.github.axolotlclient.waypoints.waypoints.gui.EditWaypointScreen;
+import io.github.axolotlclient.waypoints.waypoints.gui.util.StringWidget;
 import lombok.extern.slf4j.Slf4j;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.AbstractStringWidget;
-import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.gui.layouts.LayoutElement;
-import net.minecraft.client.gui.layouts.LinearLayout;
-import net.minecraft.client.gui.layouts.SpacerElement;
-import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.network.chat.Component;
+import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.render.TextRenderer;
 
 @SuppressWarnings("DataFlowIssue")
 @Slf4j
-public class ContextMenuScreen extends Screen {
+public class ContextMenuScreen extends io.github.axolotlclient.AxolotlClientConfig.impl.ui.Screen {
 
 	private final Screen parent;
-	private final int posX;
-	private final int posY;
-	private final LinearLayout layout = LinearLayout.vertical();
+	private int posX;
+	private int posY;
 	private final Type type;
+	private Rectangle menu;
 
 	public ContextMenuScreen(Screen parent, int x, int y, Type type) {
 		super(AxolotlClientWaypoints.tr("context_menu"));
@@ -63,63 +62,65 @@ public class ContextMenuScreen extends Screen {
 	}
 
 	@Override
-	protected void init() {
+	public void init() {
 		parent.init(minecraft, width, height);
 
-		type.build(minecraft, parent).forEach(layout::addChild);
+		posX = Math.min(width - 100, posX);
 
-		layout.visitWidgets(w -> {
-			w.setWidth(100);
-			w.setHeight(12);
-		});
-
-		layout.setPosition(posX, posY);
-		layout.defaultCellSetting().alignHorizontallyCenter();
-		layout.arrangeElements();
-
-		boolean updated = false;
-		if (layout.getY()+layout.getHeight() > height) {
-			layout.setY(height-layout.getHeight());
-			updated = true;
-		}
-		if (layout.getX()+layout.getWidth() > width) {
-			layout.setX(width-layout.getWidth());
-			updated = true;
-		}
-		if (updated) {
-			layout.arrangeElements();
+		int lastY = posY;
+		List<ClickableWidget> widgets = type.build(minecraft, parent);
+		for (ClickableWidget clickableWidget : widgets) {
+			clickableWidget.setPosition(posX, lastY);
+			clickableWidget.setWidth(100);
+			clickableWidget.setHeight(12);
+			lastY += clickableWidget.getHeight();
+			addDrawableChild(clickableWidget);
 		}
 
-		layout.visitWidgets(this::addRenderableWidget);
+		int height = lastY - posY;
+
+		if (posY + height > this.height) {
+			int newY = this.height - height;
+			int diff = newY - posY;
+			posY = newY;
+			widgets.forEach(w -> {
+				w.setY(w.getY() - diff);
+			});
+		}
+
+		menu = new Rectangle(posX, posY, 100, height);
 	}
 
 	@Override
-	public void renderBackground(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+	public void renderBackground() {
 
 	}
 
 	@Override
-	public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+	public void render(int mouseX, int mouseY, float partialTick) {
 		if (parent != null) {
-			parent.render(guiGraphics, posX - 4, posY - 4, partialTick);
+			parent.render(posX - 4, posY - 4, partialTick);
 		}
-		guiGraphics.renderOutline(layout.getX() - 1, layout.getY() - 1, layout.getWidth() + 2, layout.getHeight() + 2, Colors.GRAY.toInt());
-		guiGraphics.fill(layout.getX() - 1, layout.getY() - 1, layout.getX() + layout.getWidth() + 2, layout.getY() + layout.getHeight() + 2, Colors.DARK_GRAY.withAlpha(100).toInt());
-		super.render(guiGraphics, mouseX, mouseY, partialTick);
+		DrawUtil.outlineRect(menu.x() - 1, menu.y() - 1, menu.width() + 2, menu.height() + 2, Colors.GRAY.toInt());
+		fill(menu.x() - 1, menu.y() - 1, menu.x() + menu.width() + 2, menu.y() + menu.height() + 2, Colors.DARK_GRAY.withAlpha(100).toInt());
+		super.render(mouseX, mouseY, partialTick);
 	}
 
 	@Override
 	public boolean mouseClicked(double mouseX, double mouseY, int button) {
-		if (layout.getRectangle().containsPoint((int) mouseX, (int) mouseY)) {
+		if (mouseX >= menu.x() && mouseX < menu.x() + menu.width() && mouseY >= menu.y() && mouseY < menu.y() + menu.height()) {
 			return super.mouseClicked(mouseX, mouseY, button);
 		}
 		onClose();
-		return parent.mouseClicked(mouseX, mouseY, button);
+		if (parent instanceof io.github.axolotlclient.AxolotlClientConfig.impl.ui.Screen s) {
+			return s.mouseClicked(mouseX, mouseY, button);
+		}
+		parent.mouseClicked((int) mouseX, (int) mouseY, button);
+		return true;
 	}
 
-	@Override
 	public void onClose() {
-		minecraft.setScreen(parent);
+		minecraft.openScreen(parent);
 	}
 
 	@Override
@@ -127,38 +128,32 @@ public class ContextMenuScreen extends Screen {
 		parent.removed();
 	}
 
-	private static class TitleWidget extends AbstractStringWidget {
+	private static class TitleWidget extends StringWidget {
 
-		public TitleWidget(int x, int y, int width, int height, Component message, Font font) {
-			super(x, y, width, height, message, font);
-		}
-
-		public TitleWidget(Component message, Font font) {
-			this(0, 0, font.width(message), font.lineHeight, message, font);
+		public TitleWidget(int x, int y, int width, int height, String message, TextRenderer font) {
+			super(x, y, width, height, message, font, 0.5f);
 		}
 
 		@Override
-		protected void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-			renderScrollingString(guiGraphics, getFont(), getMessage(), getX() + 1, getY(), getRight() - 1, getBottom(), getColor());
+		public void render(int mouseX, int mouseY, float partialTick) {
+			DrawUtil.drawScrollingText(getMessage(), getX() + 1, getY(), getX() + getWidth() - 1, getY() + getHeight(), new Color(getColor()));
 		}
 	}
 
 	public sealed interface Type permits Type.Map, Type.Waypoint {
-		record Map(String dimension, int worldPosX, int worldPosY, int worldPosZ) implements Type {
+		record Map(int dimension, int worldPosX, int worldPosY, int worldPosZ) implements Type {
 
 			@Override
-			public List<LayoutElement> build(Minecraft minecraft, Screen parent) {
-				List<LayoutElement> entries = new java.util.ArrayList<>();
-				entries.add(SpacerElement.height(4));
-				entries.add(new TitleWidget(AxolotlClientWaypoints.tr("position", String.valueOf(worldPosX), String.valueOf(worldPosY), String.valueOf(worldPosZ)), minecraft.font));
-				entries.add(SpacerElement.height(4));
-				entries.add(Button.builder(AxolotlClientWaypoints.tr("create_waypoint"), btn ->
-					minecraft.setScreen(new CreateWaypointScreen(parent, worldPosX+0.5f, worldPosY, worldPosZ+0.5f))).build());
-				if (AxolotlClientWaypoints.playerHasOp()) {
-					entries.add(Button.builder(AxolotlClientWaypoints.tr("teleport_waypoint"), btn -> {
-						minecraft.getConnection().sendCommand("execute in %s run teleport @s %s %s %s".formatted(dimension, worldPosX, worldPosY+1, worldPosZ));
-						parent.onClose();
-					}).build());
+			public List<ClickableWidget> build(Minecraft minecraft, Screen parent) {
+				List<ClickableWidget> entries = new java.util.ArrayList<>();
+				entries.add(new TitleWidget(0, 4, 0, 0, AxolotlClientWaypoints.tr("position", String.valueOf(worldPosX), String.valueOf(worldPosY), String.valueOf(worldPosZ)), minecraft.textRenderer));
+				entries.add(new VanillaButtonWidget(0, 8, 0, 0, AxolotlClientWaypoints.tr("create_waypoint"), btn ->
+					minecraft.openScreen(new CreateWaypointScreen(parent, worldPosX + 0.5f, worldPosY, worldPosZ + 0.5f))));
+				if (AxolotlClientWaypoints.playerHasOp() && minecraft.world.dimension.getId() == dimension) {
+					entries.add(new VanillaButtonWidget(0, 8, 0, 0, AxolotlClientWaypoints.tr("teleport_waypoint"), btn -> {
+						minecraft.player.sendChat("/teleport @s %s %s %s".formatted(worldPosX, worldPosY + 1, worldPosZ));
+						minecraft.openScreen(null);
+					}));
 				}
 				return entries;
 			}
@@ -166,23 +161,21 @@ public class ContextMenuScreen extends Screen {
 
 		record Waypoint(io.github.axolotlclient.waypoints.waypoints.Waypoint waypoint) implements Type {
 			@Override
-			public List<LayoutElement> build(Minecraft minecraft, Screen parent) {
-				List<LayoutElement> entries = new java.util.ArrayList<>();
-				entries.add(SpacerElement.height(4));
-				entries.add(new TitleWidget(Component.literal(waypoint.name()), minecraft.font));
-				entries.add(SpacerElement.height(4));
-				entries.add(Button.builder(AxolotlClientWaypoints.tr("edit_waypoint"), btn ->
-					minecraft.setScreen(new EditWaypointScreen(parent, waypoint))).build());
+			public List<ClickableWidget> build(Minecraft minecraft, Screen parent) {
+				List<ClickableWidget> entries = new java.util.ArrayList<>();
+				entries.add(new TitleWidget(0, 4, 0, 0, waypoint.name(), minecraft.textRenderer));
+				entries.add(new VanillaButtonWidget(0, 8, 0, 0, AxolotlClientWaypoints.tr("edit_waypoint"), btn ->
+					minecraft.openScreen(new EditWaypointScreen(parent, waypoint))));
 				if (AxolotlClientWaypoints.playerHasOp()) {
-					entries.add(Button.builder(AxolotlClientWaypoints.tr("teleport_waypoint"), btn -> {
-						minecraft.getConnection().sendCommand("execute in %s run teleport @s %s %s %s".formatted(waypoint.dimension(), waypoint.x(), waypoint.y()+1, waypoint.z()));
-						parent.onClose();
-					}).build());
+					entries.add(new VanillaButtonWidget(0, 8, 0, 0, AxolotlClientWaypoints.tr("teleport_waypoint"), btn -> {
+						minecraft.player.sendChat("run teleport @s %s %s %s".formatted(waypoint.x(), waypoint.y() + 1, waypoint.z()));
+						minecraft.openScreen(null);
+					}));
 				}
 				return entries;
 			}
 		}
 
-		List<LayoutElement> build(Minecraft minecraft, Screen parent);
+		List<ClickableWidget> build(Minecraft minecraft, Screen parent);
 	}
 }

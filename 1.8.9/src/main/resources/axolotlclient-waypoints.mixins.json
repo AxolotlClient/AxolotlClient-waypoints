@@ -10,7 +10,7 @@
 		"GameRendererAccessor",
 		"GameRendererMixin",
 		"GuiMixin",
-		"LevelRendererAccessor",
+		"LevelAccessor",
 		"MinecraftServerAccessor"
 	],
 	"injectors": {

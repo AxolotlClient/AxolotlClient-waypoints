@@ -72,8 +72,7 @@ public class WaypointsScreen extends Screen {
 		addRenderableWidget(entries);
 		haF.visitWidgets(this::addRenderableWidget);
 
-		entries.loadEntries(AxolotlClientWaypoints.WAYPOINT_STORAGE.getCurrentlyAvailableWaypoints(Optional.ofNullable(minecraft)
-			.map(Minecraft::getSingleplayerServer).map(MinecraftServer::getWorldData).map(WorldData::getLevelName).orElse(null), null));
+		entries.loadEntries(AxolotlClientWaypoints.getCurrentWaypoints(true, false));
 	}
 
 	@Override

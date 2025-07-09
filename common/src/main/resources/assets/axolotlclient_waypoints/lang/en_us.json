@@ -23,6 +23,7 @@
 	"axolotlclient_waypoints.waypoint_display.unlock_display": "Lock Display",
 	"axolotlclient_waypoints.manage": "Manage Waypoints",
 	"axolotlclient_waypoints.edit_waypoint": "Edit",
+	"axolotlclient_waypoints.edit_waypoint_title": "Edit Waypoint",
 	"axolotlclient_waypoints.remove_waypoint": "Remove",
 	"axolotlclient_waypoints.waypoint_search": "Search Waypoints...",
 	"minimap": "Minimap",

@@ -23,16 +23,15 @@
 package io.github.axolotlclient.waypoints.mixin;
 
 import io.github.axolotlclient.waypoints.AxolotlClientWaypoints;
-import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.Gui;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GameGui;
+import net.minecraft.client.render.Window;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Mixin(Gui.class)
+@Mixin(GameGui.class)
 public class GuiMixin {
 
 
@@ -41,14 +40,14 @@ public class GuiMixin {
 		AxolotlClientWaypoints.MINIMAP.setup();
 	}
 
-	@Inject(method = "tick()V", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/player/Inventory;getSelected()Lnet/minecraft/world/item/ItemStack;"))
+	@Inject(method = "tick()V", at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/player/PlayerInventory;getMainHandStack()Lnet/minecraft/item/ItemStack;"))
 	private void updateMinimap(CallbackInfo ci) {
 		AxolotlClientWaypoints.MINIMAP.updateMapView();
 	}
 
-	@Inject(method = "renderCameraOverlays", at = @At("TAIL"))
-	private void renderHud(GuiGraphics guiGraphics, DeltaTracker deltaTracker, CallbackInfo ci) {
-		AxolotlClientWaypoints.WAYPOINT_RENDERER.renderWaypoints(guiGraphics, deltaTracker);
-		AxolotlClientWaypoints.MINIMAP.renderMapOverlay(guiGraphics, deltaTracker);
+	@Inject(method = "renderVignette", at = @At("TAIL"))
+	private void renderHud(float f, Window window, CallbackInfo ci) {
+		AxolotlClientWaypoints.WAYPOINT_RENDERER.renderWaypoints(f);
+		AxolotlClientWaypoints.MINIMAP.renderMapOverlay();
 	}
 }

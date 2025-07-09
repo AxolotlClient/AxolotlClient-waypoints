@@ -25,9 +25,7 @@ package io.github.axolotlclient.waypoints.waypoints;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexFormat;
 import io.github.axolotlclient.waypoints.AxolotlClientWaypoints;
 import io.github.axolotlclient.waypoints.mixin.GameRendererAccessor;
 import net.minecraft.client.Camera;
@@ -35,7 +33,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderStateShard;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
@@ -48,10 +45,6 @@ public class WaypointRenderer {
 	private final Minecraft minecraft = Minecraft.getInstance();
 	private final Matrix4f view = new Matrix4f();
 	private final Vector4f viewProj = new Vector4f();
-	private final RenderType QUADS = RenderType.create("waypoint_quads", DefaultVertexFormat.POSITION_COLOR, VertexFormat.Mode.QUADS, 192 * 8, false, true,
-		RenderType.CompositeState.builder()
-			.setShaderState(RenderStateShard.RENDERTYPE_GUI_SHADER)
-			.setTransparencyState(RenderStateShard.TRANSLUCENT_TRANSPARENCY).createCompositeState(false));
 
 	public void render(PoseStack stack, MultiBufferSource.BufferSource source) {
 		var profiler = Minecraft.getInstance().getProfiler();
@@ -121,17 +114,6 @@ public class WaypointRenderer {
 		}
 		graphics.pose().popPose();
 		profiler.pop();
-	}
-
-	private Matrix4f getProjectionMatrix(double fov) {
-		Matrix4f matrix4f = new Matrix4f();
-		var gameRenderer = ((GameRendererAccessor) minecraft.gameRenderer);
-		if (gameRenderer.getZoom() != 1.0F) {
-			matrix4f.translate(gameRenderer.getZoomX(), -gameRenderer.getZoomY(), 0.0F);
-			matrix4f.scale(gameRenderer.getZoom(), gameRenderer.getZoom(), 1.0F);
-		}
-
-		return matrix4f.perspective((float) (fov * (double) ((float) Math.PI / 180F)), (float) this.minecraft.getWindow().getWidth() / (float) this.minecraft.getWindow().getHeight(), 0.05F, minecraft.gameRenderer.getDepthFar());
 	}
 
 	private void renderWaypoint(Waypoint waypoint, GuiGraphics graphics, float tick, Camera camera, AtomicBoolean positionDrawn) {

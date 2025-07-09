@@ -23,13 +23,13 @@
 package io.github.axolotlclient.waypoints.mixin;
 
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.world.level.storage.LevelStorageSource;
+import net.minecraft.world.storage.WorldStorageSource;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 
 @Mixin(MinecraftServer.class)
 public interface MinecraftServerAccessor {
 
-	@Accessor("storageSource")
-	LevelStorageSource.LevelStorageAccess getStorageSource();
+	@Accessor("worldStorageSource")
+	WorldStorageSource getStorageSource();
 }

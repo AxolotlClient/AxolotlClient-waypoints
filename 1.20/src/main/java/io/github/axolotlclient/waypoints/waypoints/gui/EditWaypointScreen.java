@@ -52,7 +52,7 @@ public class EditWaypointScreen extends Screen {
 	private final Waypoint toEdit;
 
 	public EditWaypointScreen(Screen screen, Waypoint toEdit) {
-		super(AxolotlClientWaypoints.tr("edit_waypoint"));
+		super(AxolotlClientWaypoints.tr("edit_waypoint_title"));
 		this.parent = screen;
 		this.toEdit = toEdit;
 	}

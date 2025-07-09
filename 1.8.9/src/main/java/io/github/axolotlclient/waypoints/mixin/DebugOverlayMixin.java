@@ -26,16 +26,16 @@ import java.util.List;
 
 import com.llamalad7.mixinextras.sugar.Local;
 import io.github.axolotlclient.waypoints.AxolotlClientWaypoints;
-import net.minecraft.client.gui.components.DebugScreenOverlay;
+import net.minecraft.client.gui.overlay.DebugOverlay;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-@Mixin(DebugScreenOverlay.class)
+@Mixin(DebugOverlay.class)
 public class DebugOverlayMixin {
 
-	@Inject(method = "getGameInformation", at = @At("TAIL"))
+	@Inject(method = "getGameInfo", at = @At("TAIL"))
 	private void addMinimapDebugInformation(CallbackInfoReturnable<List<String>> cir, @Local List<String> lines) {
 		if (AxolotlClientWaypoints.MINIMAP.isEnabled()) {
 			lines.add("Minimap Update Time: %.2f ms".formatted(AxolotlClientWaypoints.MINIMAP.updateDuration / 1000_000f));

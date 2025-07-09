@@ -23,23 +23,18 @@
 package io.github.axolotlclient.waypoints.mixin;
 
 import io.github.axolotlclient.waypoints.AxolotlClientWaypoints;
-import net.minecraft.client.multiplayer.ClientPacketListener;
-import net.minecraft.network.protocol.game.ClientboundLoginPacket;
+import net.minecraft.client.network.handler.ClientPlayNetworkHandler;
+import net.minecraft.network.packet.s2c.play.LoginS2CPacket;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Mixin(ClientPacketListener.class)
+@Mixin(ClientPlayNetworkHandler.class)
 public class ClientPacketListenerMixin {
 
 	@Inject(method = "handleLogin", at = @At("TAIL"))
-	private void onLogin(ClientboundLoginPacket packet, CallbackInfo ci) {
+	private void onLogin(LoginS2CPacket loginS2CPacket, CallbackInfo ci) {
 		AxolotlClientWaypoints.WAYPOINT_STORAGE.load();
-	}
-
-	@Inject(method = "clearLevel", at = @At("TAIL"))
-	private void onClearLevel(CallbackInfo ci) {
-		AxolotlClientWaypoints.WAYPOINT_STORAGE.save();
 	}
 }

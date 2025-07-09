@@ -22,38 +22,39 @@
 
 package io.github.axolotlclient.waypoints.map.widgets;
 
+import io.github.axolotlclient.AxolotlClientConfig.impl.ui.ButtonWidget;
 import io.github.axolotlclient.waypoints.AxolotlClientWaypoints;
-import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.Button;
-import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.client.Minecraft;
+import net.minecraft.resource.Identifier;
 
-public class DropdownButton extends Button {
-	private static final ResourceLocation ARROW_UP = AxolotlClientWaypoints.rl("dropdown/up"),
-		ARROW_UP_HIGHLIGHTED = AxolotlClientWaypoints.rl("dropdown/up_highlighted"),
-		ARROW_DOWN = AxolotlClientWaypoints.rl("dropdown/down"),
-		ARROW_DOWN_HIGHLIGHTED = AxolotlClientWaypoints.rl("dropdown/down_highlighted");
+public class DropdownButton extends ButtonWidget {
+	private static final Identifier ARROW_UP = AxolotlClientWaypoints.rl("textures/gui/sprites/dropdown/up.png"),
+		ARROW_UP_HIGHLIGHTED = AxolotlClientWaypoints.rl("textures/gui/sprites/dropdown/up_highlighted.png"),
+		ARROW_DOWN = AxolotlClientWaypoints.rl("textures/gui/sprites/dropdown/down.png"),
+		ARROW_DOWN_HIGHLIGHTED = AxolotlClientWaypoints.rl("textures/gui/sprites/dropdown/down_highlighted.png");
 
 	private boolean state;
 
-	public DropdownButton(int x, int y, int width, int height, Component message, PressConsumer onPress) {
+	public DropdownButton(int x, int y, int width, int height, String message, PressConsumer onPress) {
 		super(x, y, width, height, message, btn -> {
 			var dropdown = (DropdownButton) btn;
 			dropdown.state = !dropdown.state;
 			onPress.pressed(btn, dropdown.state);
-		}, DEFAULT_NARRATION);
+		});
 	}
 
 	@Override
-	protected void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+	protected void drawWidget(int mouseX, int mouseY, float partialTick) {
 		if (state) {
-			guiGraphics.blitSprite(isHovered() ? ARROW_UP_HIGHLIGHTED : ARROW_UP, getX(), getY(), getWidth(), getHeight());
+			Minecraft.getInstance().getTextureManager().bind(isHovered() ? ARROW_UP_HIGHLIGHTED : ARROW_UP);
+			drawTexture(getX(), getY(), getWidth(), getHeight(), getWidth(), getHeight());
 		} else {
-			guiGraphics.blitSprite(isHovered() ? ARROW_DOWN_HIGHLIGHTED : ARROW_DOWN, getX(), getY(), getWidth(), getHeight());
+			Minecraft.getInstance().getTextureManager().bind(isHovered() ? ARROW_DOWN_HIGHLIGHTED : ARROW_DOWN);
+			drawTexture(getX(), getY(), getWidth(), getHeight(), getWidth(), getHeight());
 		}
 	}
 
 	public interface PressConsumer {
-		void pressed(Button button, boolean state);
+		void pressed(ButtonWidget button, boolean state);
 	}
 }

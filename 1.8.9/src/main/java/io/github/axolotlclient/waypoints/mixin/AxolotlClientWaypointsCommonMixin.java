@@ -37,7 +37,7 @@ public class AxolotlClientWaypointsCommonMixin {
 	 * @reason implement cross-version access
 	 */
 	@Overwrite
-	public static Path getCurrentStorageDir() {
-		return AxolotlClientWaypoints.getCurrentStorageDir();
+	public static Path getCurrentWorldStorageDir() {
+		return AxolotlClientWaypoints.getCurrentWorldStorageDir();
 	}
 }

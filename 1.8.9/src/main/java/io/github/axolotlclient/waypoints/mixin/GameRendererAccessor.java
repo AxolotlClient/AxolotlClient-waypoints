@@ -22,8 +22,7 @@
 
 package io.github.axolotlclient.waypoints.mixin;
 
-import net.minecraft.client.Camera;
-import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.client.render.GameRenderer;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Invoker;
 
@@ -31,5 +30,5 @@ import org.spongepowered.asm.mixin.gen.Invoker;
 public interface GameRendererAccessor {
 
 	@Invoker("getFov")
-	double invokeGetFov(Camera mainCamera, float f, boolean b);
+	float invokeGetFov(float f, boolean b);
 }

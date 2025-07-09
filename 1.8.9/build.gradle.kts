@@ -64,6 +64,8 @@ dependencies {
 
 	modCompileOnly("io.github.moehreag:legacy-lwjgl3:${project.property("legacy_lwgjl3")}")
 	modLocalRuntime("io.github.moehreag:legacy-lwjgl3:${project.property("legacy_lwgjl3")}:all-remapped")
+
+	implementation(include("org.joml:joml:1.10.8")!!)
 }
 
 configurations.configureEach {

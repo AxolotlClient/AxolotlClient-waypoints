@@ -31,7 +31,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-import com.mojang.blaze3d.platform.InputConstants;
 import io.github.axolotlclient.AxolotlClientConfig.api.AxolotlClientConfig;
 import io.github.axolotlclient.AxolotlClientConfig.api.manager.ConfigManager;
 import io.github.axolotlclient.AxolotlClientConfig.api.options.OptionCategory;
@@ -48,15 +47,16 @@ import io.github.axolotlclient.waypoints.waypoints.gui.CreateWaypointScreen;
 import io.github.axolotlclient.waypoints.waypoints.gui.WaypointsScreen;
 import lombok.extern.slf4j.Slf4j;
 import net.fabricmc.api.ClientModInitializer;
-import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.resources.language.I18n;
-import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.options.KeyBinding;
+import net.minecraft.locale.I18n;
+import net.minecraft.network.packet.c2s.play.CommandSuggestionsC2SPacket;
+import net.minecraft.resource.Identifier;
+import net.ornithemc.osl.keybinds.api.KeyBindingEvents;
+import net.ornithemc.osl.lifecycle.api.client.MinecraftClientEvents;
+import org.lwjgl.input.Keyboard;
 
 @Slf4j
 @SuppressWarnings("DataFlowIssue")
@@ -74,9 +74,9 @@ public class AxolotlClientWaypoints implements ClientModInitializer {
 	public static BooleanOption renderWaypointsInWorld = new BooleanOption("render_waypoints_in_world", true);
 	public static BooleanOption renderOutOfViewWaypointsOnScreenEdge = new BooleanOption("render_out_of_view_waypoints", true);
 
-	private final KeyMapping map = new KeyMapping(MODID + ".world_map", InputConstants.KEY_M, MODID);
-	private final KeyMapping manageWaypoints = new KeyMapping(MODID + ".waypoints_menu", InputConstants.KEY_K, MODID);
-	private final KeyMapping newWaypoint = new KeyMapping(MODID + ".create_waypoint", InputConstants.KEY_N, MODID);
+	private final KeyBinding map = new KeyBinding(MODID + ".world_map", Keyboard.KEY_M, MODID);
+	private final KeyBinding manageWaypoints = new KeyBinding(MODID + ".waypoints_menu", Keyboard.KEY_K, MODID);
+	private final KeyBinding newWaypoint = new KeyBinding(MODID + ".create_waypoint", Keyboard.KEY_N, MODID);
 
 	@Override
 	public void onInitializeClient() {
@@ -96,16 +96,18 @@ public class AxolotlClientWaypoints implements ClientModInitializer {
 		configManager.load();
 		configManager.save();
 
-		KeyBindingHelper.registerKeyBinding(map);
-		KeyBindingHelper.registerKeyBinding(manageWaypoints);
-		KeyBindingHelper.registerKeyBinding(newWaypoint);
-		ClientTickEvents.END_CLIENT_TICK.register(mc -> {
+		KeyBindingEvents.REGISTER_KEYBINDS.register(reg -> {
+			reg.register(map);
+			reg.register(manageWaypoints);
+			reg.register(newWaypoint);
+		});
+		MinecraftClientEvents.TICK_END.register(mc -> {
 			if (map.consumeClick()) {
-				mc.setScreen(new WorldMapScreen());
+				mc.openScreen(new WorldMapScreen());
 			} else if (manageWaypoints.consumeClick()) {
-				mc.setScreen(new WaypointsScreen(mc.screen));
+				mc.openScreen(new WaypointsScreen(mc.screen));
 			} else if (newWaypoint.consumeClick()) {
-				mc.setScreen(new CreateWaypointScreen(mc.screen));
+				mc.openScreen(new CreateWaypointScreen(mc.screen));
 			}
 		});
 	}
@@ -114,31 +116,35 @@ public class AxolotlClientWaypoints implements ClientModInitializer {
 		return ConfigStyles.createScreen(parent, category);
 	}
 
-	public static ResourceLocation rl(String path) {
-		return ResourceLocation.fromNamespaceAndPath(MODID, path);
+	public static Identifier rl(String path) {
+		return new Identifier(MODID, path);
 	}
 
-	public static Component tr(String key, Object... args) {
-		return Component.translatable(MODID + "." + key, args);
+	public static String tr(String key, Object... args) {
+		return I18n.translate(MODID + "." + key, args);
 	}
 
 	public static String tra(String key) {
-		return I18n.get(MODID + "." + key);
+		return I18n.translate(MODID + "." + key);
 	}
 
 	public static List<Waypoint> getCurrentWaypoints() {
+		return getCurrentWaypoints(true, true);
+	}
+
+	public static List<Waypoint> getCurrentWaypoints(boolean world, boolean dimension) {
 		var mc = Minecraft.getInstance();
 		String str;
-		if (mc.getCurrentServer() != null) {
-			str = mc.getCurrentServer().ip;
-		} else if (mc.getSingleplayerServer() != null) {
-			str = ((MinecraftServerAccessor) mc.getSingleplayerServer()).getStorageSource().getLevelId();
+		if (mc.getCurrentServerEntry() != null) {
+			str = mc.getCurrentServerEntry().address;
+		} else if (mc.getServer() != null) {
+			str = mc.getServer().getWorldSaveName();
 		} else {
 			return Collections.emptyList();
 		}
-		var pos = mc.player.position().toVector3f();
-		return WAYPOINT_STORAGE.getCurrentlyAvailableWaypoints(str, mc.level.dimension().location().toString()).stream()
-			.sorted(Comparator.comparingDouble(w -> w.squaredDistTo(pos)))
+		var player = mc.player;
+		return WAYPOINT_STORAGE.getCurrentlyAvailableWaypoints(str, String.valueOf(mc.world.dimension.getId())).stream()
+			.sorted(Comparator.comparingDouble(w -> w.squaredDistTo(player.x, player.y, player.z)))
 			.toList();
 	}
 
@@ -148,17 +154,22 @@ public class AxolotlClientWaypoints implements ClientModInitializer {
 
 	public static Path getCurrentStorageDir() {
 		var mc = Minecraft.getInstance();
+		return getCurrentWorldStorageDir()
+			.resolve(getB64(String.valueOf(mc.world.dimension.getId())));
+	}
+
+	public static Path getCurrentWorldStorageDir() {
+		var mc = Minecraft.getInstance();
 		String str;
-		if (mc.getSingleplayerServer() == null) {
-			str = mc.getCurrentServer().ip;
+		if (mc.getServer() == null) {
+			str = mc.getCurrentServerEntry().address;
 		} else {
-			str = ((MinecraftServerAccessor) mc.getSingleplayerServer()).getStorageSource().getLevelId();
+			str = mc.getServer().getWorldSaveName();
 		}
-		return AxolotlClientWaypoints.MOD_STORAGE_DIR.resolve(getB64(str))
-			.resolve(getB64(mc.level.dimension().location().toString()));
+		return AxolotlClientWaypoints.MOD_STORAGE_DIR.resolve(getB64(str));
 	}
 
 	public static boolean playerHasOp() {
-		return Minecraft.getInstance().player.hasPermissions(4);
+		return Minecraft.getInstance().getServer().getPlayerManager().isOp(Minecraft.getInstance().player.getGameProfile());
 	}
 }

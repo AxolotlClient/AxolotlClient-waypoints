@@ -90,7 +90,7 @@ public class Minimap {
 	public void setup() {
 		minecraft.getTextureManager().register(texLocation, tex = new DynamicTexture(pixels));
 		pixels.fillRect(0, 0, pixels.getWidth(), pixels.getHeight(), ARGB.opaque(0));
-		this.x = minecraft.getWindow().getGuiScaledWidth() - size - 10;
+		this.x = minecraft.getWindow().getWidth() - size - 10;
 		this.y = 10;
 	}
 

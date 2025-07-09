@@ -26,35 +26,32 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.Collection;
 import java.util.List;
-import java.util.Map;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
 import java.util.function.IntFunction;
-import java.util.stream.Collectors;
 
+import com.google.common.collect.Lists;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufInputStream;
 import io.netty.buffer.Unpooled;
-import it.unimi.dsi.fastutil.objects.Object2IntArrayMap;
-import it.unimi.dsi.fastutil.objects.Object2IntMap;
-import net.minecraft.Util;
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.network.codec.ByteBufCodecs;
-import net.minecraft.network.codec.StreamCodec;
-import net.minecraft.util.ByIdMap;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.level.chunk.ChunkAccess;
-import net.minecraft.world.level.chunk.LevelChunk;
-import net.minecraft.world.level.chunk.LevelChunkSection;
-import net.minecraft.world.level.levelgen.Heightmap;
+import io.netty.handler.codec.DecoderException;
+import net.minecraft.network.PacketByteBuf;
+import net.minecraft.util.math.ChunkPos;
+import net.minecraft.world.World;
+import net.minecraft.world.chunk.ChunkNibbleStorage;
+import net.minecraft.world.chunk.WorldChunk;
+import net.minecraft.world.chunk.WorldChunkSection;
 
 public class LevelChunkStorage {
 
-	public record Entry(ChunkAccess chunk) {
+	public record Entry(WorldChunk chunk) {
 		public void write(FriendlyByteBuf buf) {
 			LevelChunkStorage.write(chunk, buf);
 		}
 
-		public static Entry read(Level level, FriendlyByteBuf buf) {
+		public static Entry read(World level, FriendlyByteBuf buf) {
 			return new Entry(LevelChunkStorage.read(level, buf));
 		}
 
@@ -66,7 +63,7 @@ public class LevelChunkStorage {
 
 		}
 
-		public static Entry read(Path path, Level level) throws IOException {
+		public static Entry read(Path path, World level) throws IOException {
 			return read(level, new FriendlyByteBuf(Unpooled.wrappedBuffer(Files.readAllBytes(path))));
 		}
 	}
@@ -75,7 +72,7 @@ public class LevelChunkStorage {
 		buf.writeCollection(entries, (b, e) -> e.write(b));
 	}
 
-	public static List<Entry> readEntries(Level level, FriendlyByteBuf buf) {
+	public static List<Entry> readEntries(World level, FriendlyByteBuf buf) {
 		return buf.readList(e -> Entry.read(level, e));
 	}
 
@@ -83,52 +80,128 @@ public class LevelChunkStorage {
 		return new FriendlyByteBuf(Unpooled.buffer());
 	}
 
-	private static final Object2IntMap<Heightmap.Types> IDS = Util.make(() -> {
-		Object2IntMap<Heightmap.Types> map = new Object2IntArrayMap<>(5);
-		map.put(Heightmap.Types.WORLD_SURFACE_WG, 0);
-		map.put(Heightmap.Types.WORLD_SURFACE, 1);
-		map.put(Heightmap.Types.OCEAN_FLOOR_WG, 2);
-		map.put(Heightmap.Types.OCEAN_FLOOR, 3);
-		map.put(Heightmap.Types.MOTION_BLOCKING, 4);
-		map.put(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, 5);
-		return map;
-	});
-
-	private static final IntFunction<Heightmap.Types> BY_ID = ByIdMap.continuous(IDS::getInt, Heightmap.Types.values(), ByIdMap.OutOfBoundsStrategy.ZERO);
-	public static final StreamCodec<ByteBuf, Heightmap.Types> STREAM_CODEC = ByteBufCodecs.idMapper(BY_ID, IDS::getInt);
-
-	public static void write(ChunkAccess chunk, FriendlyByteBuf buf) {
-		buf.writeChunkPos(chunk.getPos());
-		var heightmaps = chunk.getHeightmaps()
-			.stream()
-			.filter(entryx -> entryx.getKey().sendToClient())
-			.collect(Collectors.toMap(Map.Entry::getKey, entryx -> entryx.getValue().getRawData().clone()));
-		buf.writeMap(heightmaps, STREAM_CODEC, FriendlyByteBuf::writeLongArray);
+	public static void write(WorldChunk chunk, FriendlyByteBuf buf) {
+		buf.writeLong(ChunkPos.toLong(chunk.chunkX, chunk.chunkZ));
+		buf.writeVarIntArray(chunk.getHeightMap());
 
 		buf.writeInt(chunk.getSections().length);
-		for (LevelChunkSection section : chunk.getSections()) {
-			section.write(buf);
-			section.getBiomes().write(buf);
+		for (WorldChunkSection section : chunk.getSections()) {
+			buf.writeCharArray(section.getBlockStates());
+			buf.writeByteArray(section.getBlockLightStorage().getData());
+			buf.writeByteArray(section.getSkyLightStorage().getData());
 		}
 
 
 	}
 
-	public static LevelChunk read(Level level, FriendlyByteBuf buf) {
-		var pos = buf.readChunkPos();
-		var heightmaps = buf.readMap(STREAM_CODEC, FriendlyByteBuf::readLongArray);
+	public static WorldChunk read(World level, FriendlyByteBuf buf) {
+		long packedChunkPos = buf.readLong();
+		int chunkX = (int) packedChunkPos;
+		int chunkZ = (int) (packedChunkPos >> 32);
+		var heightmaps = buf.readVarIntArray();
 
-		var chunk = new LevelChunk(level, pos);
+		var chunk = new WorldChunk(level, chunkX, chunkZ);
 		int sectionCount = buf.readInt();
 		if (sectionCount != chunk.getSections().length) {
 			return chunk;
 		}
 		for (var section : chunk.getSections()) {
-			section.read(buf);
-			section.readBiomes(buf);
+			section.setBlockStates(buf.readCharArray());
+			section.setBlockLightStorage(new ChunkNibbleStorage(buf.readByteArray()));
+			section.setSkyLightStorage(new ChunkNibbleStorage(buf.readByteArray()));
 		}
-		heightmaps.forEach(chunk::setHeightmap);
-		chunk.initializeLightSources();
+		chunk.setHeightmap(heightmaps);
+		chunk.clearLightChecks();
 		return chunk;
+	}
+
+	public static class FriendlyByteBuf extends PacketByteBuf {
+
+		public FriendlyByteBuf(ByteBuf byteBuf) {
+			super(byteBuf);
+		}
+
+		public <T> void writeCollection(Collection<T> collection, BiConsumer<? super FriendlyByteBuf, T> elementWriter) {
+			this.writeVarInt(collection.size());
+
+			for (T object : collection) {
+				elementWriter.accept(this, object);
+			}
+
+		}
+
+		public <T> List<T> readList(Function<? super FriendlyByteBuf, T> elementReader) {
+			return this.readCollection(Lists::newArrayListWithCapacity, elementReader);
+		}
+
+		public <T, C extends Collection<T>> C readCollection(IntFunction<C> collectionFactory, Function<? super FriendlyByteBuf, T> elementReader) {
+			int i = this.readVarInt();
+			C collection = collectionFactory.apply(i);
+
+			for (int j = 0; j < i; ++j) {
+				collection.add(elementReader.apply(this));
+			}
+
+			return collection;
+		}
+
+		public FriendlyByteBuf writeVarIntArray(int[] array) {
+			this.writeVarInt(array.length);
+
+			for (int i : array) {
+				this.writeVarInt(i);
+			}
+
+			return this;
+		}
+
+		public int[] readVarIntArray() {
+			return this.readVarIntArray(this.readableBytes());
+		}
+
+		public int[] readVarIntArray(int maxLength) {
+			int i = this.readVarInt();
+			if (i > maxLength) {
+				throw new DecoderException("VarIntArray with size " + i + " is bigger than allowed " + maxLength);
+			} else {
+				int[] is = new int[i];
+
+				for (int j = 0; j < is.length; ++j) {
+					is[j] = this.readVarInt();
+				}
+
+				return is;
+			}
+		}
+
+		public FriendlyByteBuf writeCharArray(char[] array) {
+			super.writeVarInt(array.length);
+
+			for (char i : array) {
+				writeChar(i);
+			}
+
+			return this;
+		}
+
+		public char[] readCharArray() {
+			return this.readCharArray(this.readableBytes());
+		}
+
+		public char[] readCharArray(int maxLength) {
+			int i = this.readVarInt();
+			if (i > maxLength) {
+				throw new DecoderException("CharArray with size " + i + " is bigger than allowed " + maxLength);
+			} else {
+				char[] is = new char[i];
+
+				for (int j = 0; j < is.length; ++j) {
+					is[j] = this.readChar();
+				}
+
+				return is;
+			}
+		}
+
 	}
 }

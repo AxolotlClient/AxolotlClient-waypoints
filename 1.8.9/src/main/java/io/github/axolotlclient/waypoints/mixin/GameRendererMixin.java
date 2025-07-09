@@ -23,8 +23,7 @@
 package io.github.axolotlclient.waypoints.mixin;
 
 import io.github.axolotlclient.waypoints.AxolotlClientWaypoints;
-import net.minecraft.client.DeltaTracker;
-import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.client.render.GameRenderer;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -33,9 +32,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(GameRenderer.class)
 public class GameRendererMixin {
 
-	@Inject(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/Minecraft;getMainRenderTarget()Lcom/mojang/blaze3d/pipeline/RenderTarget;"))
-	private void renderWaypoints(DeltaTracker deltaTracker, boolean renderLevel, CallbackInfo ci) {
-		AxolotlClientWaypoints.WAYPOINT_RENDERER.render(deltaTracker);
+	@Inject(method = "render(FJ)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/Minecraft;getRenderTarget()Lcom/mojang/blaze3d/pipeline/RenderTarget;"))
+	private void renderWaypoints(float f, long l, CallbackInfo ci) {
+		AxolotlClientWaypoints.WAYPOINT_RENDERER.render();
 	}
 
 }
