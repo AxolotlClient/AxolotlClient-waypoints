@@ -56,7 +56,6 @@ public class LevelChunkStorage {
 		}
 
 		public void write(Path path) throws IOException {
-
 			var buf = buffer();
 			write(buf);
 			Files.copy(new ByteBufInputStream(buf), path, StandardCopyOption.REPLACE_EXISTING);
@@ -86,12 +85,14 @@ public class LevelChunkStorage {
 
 		buf.writeInt(chunk.getSections().length);
 		for (WorldChunkSection section : chunk.getSections()) {
+			if (section == null) {
+				buf.writeCharArray(new char[0]);
+				continue;
+			}
 			buf.writeCharArray(section.getBlockStates());
 			buf.writeByteArray(section.getBlockLightStorage().getData());
 			buf.writeByteArray(section.getSkyLightStorage().getData());
 		}
-
-
 	}
 
 	public static WorldChunk read(World level, FriendlyByteBuf buf) {
@@ -105,8 +106,18 @@ public class LevelChunkStorage {
 		if (sectionCount != chunk.getSections().length) {
 			return chunk;
 		}
-		for (var section : chunk.getSections()) {
-			section.setBlockStates(buf.readCharArray());
+		WorldChunkSection[] sections = chunk.getSections();
+		for (int i = 0; i < sectionCount; i++) {
+			var section = sections[i];
+
+			char[] blockstates = buf.readCharArray();
+			if (blockstates.length == 0) {
+				continue;
+			}
+			if (section == null) {
+				sections[i] = section = new WorldChunkSection(i << 4, !level.dimension.isDark());
+			}
+			section.setBlockStates(blockstates);
 			section.setBlockLightStorage(new ChunkNibbleStorage(buf.readByteArray()));
 			section.setSkyLightStorage(new ChunkNibbleStorage(buf.readByteArray()));
 		}

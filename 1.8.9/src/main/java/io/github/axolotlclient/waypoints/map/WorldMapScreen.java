@@ -64,7 +64,6 @@ import net.minecraft.world.chunk.WorldChunk;
 import org.joml.Matrix4fStack;
 import org.joml.Vector2i;
 import org.joml.Vector3f;
-import org.lwjgl.input.Mouse;
 
 @Slf4j
 public class WorldMapScreen extends Screen {
@@ -317,7 +316,7 @@ public class WorldMapScreen extends Screen {
 
 	public static void saveLoadedChunkTile(int chunkX, int chunkZ) {
 		Minecraft minecraft = Minecraft.getInstance();
-		var tile = createTile(minecraft, chunkX, chunkZ, true, 0);
+		var tile = createTile(minecraft, chunkX << 4, chunkZ << 4, true, 0);
 		if (tile != null) {
 			tile.load(0, true)
 				.thenRun(() -> {
@@ -349,7 +348,7 @@ public class WorldMapScreen extends Screen {
 				}
 				return true;
 			} else if (button == 0) {
-				dragMouseX = (mouseX  - dragOffset.x);
+				dragMouseX = (mouseX - dragOffset.x);
 				dragMouseY = (mouseY - dragOffset.y);
 			}
 			return false;
