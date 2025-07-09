@@ -2,19 +2,16 @@
 	"schemaVersion": 1,
 	"id": "axolotlclient-waypoints",
 	"version": "${version}",
-	"name": "AxolotlClient",
-	"description": "Free & Open-Source Minecraft Mod for use in PvP and other Scenarios",
+	"name": "AxolotlClient Waypoints",
+	"description": "Waypoints & Minimap mod including integration with AxolotlClient",
 	"authors": [
 		"moehreag"
 	],
 	"contributors": [
-		"YakisikliBaran",
-		"DragonEggBedrockBreaking",
-		"TheKodeToad",
-		"CornetPanique86"
+
 	],
 	"contact": {
-		"homepage": "https://axolotlclient.github.io/",
+		"homepage": "https://axolotlclient.com/",
 		"sources": "https://github.com/AxolotlClient/AxolotlClient-waypoints/"
 	},
 	"license": "LGPL-3.0-or-later",
@@ -29,9 +26,6 @@
 	"mixins": [
 		"axolotlclient-waypoints.mixins.json"
 	],
-	"custom": {
-		"modmenu:clientsideOnly": true
-	},
 	"depends": {
 		"fabricloader": ">=0.15.11",
 		"minecraft": "1.21.x",

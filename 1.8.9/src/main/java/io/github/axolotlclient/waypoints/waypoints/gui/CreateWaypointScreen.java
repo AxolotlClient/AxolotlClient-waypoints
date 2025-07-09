@@ -78,7 +78,7 @@ public class CreateWaypointScreen extends io.github.axolotlclient.AxolotlClientC
 
 	@Override
 	public void init() {
-		boolean singleplayer = minecraft.getServer().isSingleplayer();
+		boolean singleplayer = minecraft.getServer() != null;
 
 		var posTitle = addDrawableChild(new StringWidget(AxolotlClientWaypoints.tr("waypoint_position"), textRenderer)).alignCenter();
 		posTitle.setWidth(width);

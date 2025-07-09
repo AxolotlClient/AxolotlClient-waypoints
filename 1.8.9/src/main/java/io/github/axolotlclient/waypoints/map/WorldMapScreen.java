@@ -34,7 +34,9 @@ import java.util.function.Supplier;
 import com.google.common.collect.Lists;
 import com.mojang.blaze3d.platform.GlStateManager;
 import io.github.axolotlclient.AxolotlClientConfig.api.util.Colors;
+import io.github.axolotlclient.AxolotlClientConfig.impl.ui.Element;
 import io.github.axolotlclient.AxolotlClientConfig.impl.ui.Screen;
+import io.github.axolotlclient.AxolotlClientConfig.impl.ui.Selectable;
 import io.github.axolotlclient.AxolotlClientConfig.impl.util.DrawUtil;
 import io.github.axolotlclient.waypoints.AxolotlClientWaypoints;
 import io.github.axolotlclient.waypoints.map.util.LevelChunkStorage;
@@ -119,7 +121,7 @@ public class WorldMapScreen extends Screen {
 		GlStateManager.rotatef(minecraft.player.getHeadYaw() + 180, 0, 0, 1);
 		GlStateManager.scalef(0.5f * AxolotlClientWaypoints.MINIMAP.arrowScale.get(), 0.5f * AxolotlClientWaypoints.MINIMAP.arrowScale.get(), 1);
 		int arrowSize = 15;
-		GlStateManager.translatef(-arrowSize / 2f, -arrowSize / 2f, 0);
+		GlStateManager.translatef(-arrowSize / 2f, -arrowSize / 2f, 5);
 		minecraft.getTextureManager().bind(Minimap.arrowLocation);
 		drawTexture(0, 0, 0, 0, arrowSize, arrowSize, arrowSize, arrowSize);
 		matrixStack.popMatrix();
@@ -195,6 +197,7 @@ public class WorldMapScreen extends Screen {
 			if (hoveredWaypoint == null) {
 				if (mouseX >= pos.x() && mouseY >= pos.y() && mouseX < pos.x() + width && mouseY < pos.y() + height) {
 					hoveredWaypoint = waypoint;
+					GlStateManager.translatef(0, 0, 2);
 					DrawUtil.outlineRect(-width / 2, -height / 2, width, height, Colors.WHITE.toInt());
 				}
 			}
@@ -389,18 +392,49 @@ public class WorldMapScreen extends Screen {
 	}
 
 	@Override
-	public void handleMouse() {
-		super.handleMouse();
-		int scroll = Mouse.getDWheel();
-		int x = Mouse.getEventX() * this.width / this.minecraft.width;
-		int y = this.height - Mouse.getEventY() * this.height / this.minecraft.height - 1;
-		if (hoveredElement(x, y).isEmpty() && scroll != 0) {
-			mouseScrolled(x, y, 0, scroll);
-		}
-	}
-
-	@Override
 	public void init() {
+		class Overlay implements Element, Selectable {
+
+			@Override
+			public boolean isFocused() {
+				return true;
+			}
+
+			@Override
+			public void setFocused(boolean focused) {
+
+			}
+
+			@Override
+			public SelectionType getType() {
+				return SelectionType.NONE;
+			}
+
+			@Override
+			public boolean isMouseOver(double mouseX, double mouseY) {
+				return true;
+			}
+
+			boolean called = false;
+			@Override
+			public boolean mouseScrolled(double mouseX, double mouseY, double amountX, double amountY) {
+				if (called) return false;
+				called = true;
+				var bl = WorldMapScreen.this.mouseScrolled(mouseX, mouseY, amountX, amountY);
+				called = false;
+				return bl;
+			}
+
+			@Override
+			public boolean mouseDragged(double mouseX, double mouseY, int button, double deltaX, double deltaY) {
+				if (called) return false;
+				called = true;
+				var bl = WorldMapScreen.super.mouseDragged(mouseX, mouseY, button, deltaX, deltaY);
+				called = false;
+				return bl;
+			}
+		}
+		addSelectableChild(new Overlay());
 		addDrawableChild(new ImageButton(4, height - 20, 16, 16, new ImageButton.WidgetSprites(OPTIONS_SPRITE, OPTIONS_SPRITE, OPTIONS_HOVERED_SPRITE),
 			btn -> minecraft.openScreen(AxolotlClientWaypoints.createOptionsScreen(this)), AxolotlClientWaypoints.tr("options")));
 		var slider = addDrawableChild(new AbstractSliderButton(width - 150, 20, 150, 20, AxolotlClientWaypoints.tr("player_y"), 0) {

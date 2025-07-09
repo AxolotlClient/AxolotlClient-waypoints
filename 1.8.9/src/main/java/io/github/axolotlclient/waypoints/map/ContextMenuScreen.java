@@ -24,6 +24,7 @@ package io.github.axolotlclient.waypoints.map;
 
 import java.util.List;
 
+import com.mojang.blaze3d.platform.GlStateManager;
 import io.github.axolotlclient.AxolotlClientConfig.api.util.Color;
 import io.github.axolotlclient.AxolotlClientConfig.api.util.Colors;
 import io.github.axolotlclient.AxolotlClientConfig.api.util.Rectangle;
@@ -39,7 +40,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.render.TextRenderer;
 
-@SuppressWarnings("DataFlowIssue")
 @Slf4j
 public class ContextMenuScreen extends io.github.axolotlclient.AxolotlClientConfig.impl.ui.Screen {
 
@@ -70,7 +70,7 @@ public class ContextMenuScreen extends io.github.axolotlclient.AxolotlClientConf
 		int lastY = posY;
 		List<ClickableWidget> widgets = type.build(minecraft, parent);
 		for (ClickableWidget clickableWidget : widgets) {
-			clickableWidget.setPosition(posX, clickableWidget.getY()+ lastY);
+			clickableWidget.setPosition(posX, clickableWidget.getY() + lastY);
 			clickableWidget.setWidth(100);
 			clickableWidget.setHeight(12);
 			lastY = clickableWidget.getY()+ clickableWidget.getHeight();
@@ -79,14 +79,14 @@ public class ContextMenuScreen extends io.github.axolotlclient.AxolotlClientConf
 
 		int height = lastY - posY;
 
-		if (posY + height > this.height) {
+		/*if (posY + height > this.height) {
 			int newY = this.height - height;
 			int diff = newY - posY;
 			posY = newY;
 			widgets.forEach(w -> {
 				w.setY(w.getY() - diff);
 			});
-		}
+		}*/
 
 		menu = new Rectangle(posX, posY, 100, height);
 	}
@@ -99,7 +99,10 @@ public class ContextMenuScreen extends io.github.axolotlclient.AxolotlClientConf
 	@Override
 	public void render(int mouseX, int mouseY, float partialTick) {
 		if (parent != null) {
+			GlStateManager.pushMatrix();
+			GlStateManager.translatef(0, 0, -100);
 			parent.render(posX - 4, posY - 4, partialTick);
+			GlStateManager.popMatrix();
 		}
 		DrawUtil.outlineRect(menu.x() - 1, menu.y() - 1, menu.width() + 2, menu.height() + 2, Colors.GRAY.toInt());
 		fill(menu.x() - 1, menu.y() - 1, menu.x() + menu.width() + 2, menu.y() + menu.height() + 2, Colors.DARK_GRAY.withAlpha(100).toInt());
@@ -136,7 +139,7 @@ public class ContextMenuScreen extends io.github.axolotlclient.AxolotlClientConf
 
 		@Override
 		public void render(int mouseX, int mouseY, float partialTick) {
-			DrawUtil.drawScrollingText(getMessage(), getX() + 1, getY(), getX() + getWidth() - 1, getY() + getHeight(), new Color(getColor()));
+			DrawUtil.drawScrollingText(getMessage(), getX() + 1, getY(), getWidth() - 1, getHeight(), new Color(getColor()));
 		}
 	}
 
@@ -149,12 +152,12 @@ public class ContextMenuScreen extends io.github.axolotlclient.AxolotlClientConf
 				entries.add(new TitleWidget(0, 4, 0, 0, AxolotlClientWaypoints.tr("position", String.valueOf(worldPosX), String.valueOf(worldPosY), String.valueOf(worldPosZ)), minecraft.textRenderer));
 				entries.add(new VanillaButtonWidget(0, 8, 0, 0, AxolotlClientWaypoints.tr("create_waypoint"), btn ->
 					minecraft.openScreen(new CreateWaypointScreen(parent, worldPosX + 0.5f, worldPosY, worldPosZ + 0.5f))));
-				if (AxolotlClientWaypoints.playerHasOp() && minecraft.world.dimension.getName().equals(dimension)) {
+				/*if (AxolotlClientWaypoints.playerHasOp() && minecraft.world.dimension.getName().equals(dimension)) {
 					entries.add(new VanillaButtonWidget(0, 8, 0, 0, AxolotlClientWaypoints.tr("teleport_waypoint"), btn -> {
 						minecraft.player.sendChat("/tp %s %s %s".formatted(worldPosX, worldPosY + 1, worldPosZ));
 						minecraft.openScreen(null);
 					}));
-				}
+				}*/
 				return entries;
 			}
 		}
@@ -166,12 +169,12 @@ public class ContextMenuScreen extends io.github.axolotlclient.AxolotlClientConf
 				entries.add(new TitleWidget(0, 4, 0, 0, waypoint.name(), minecraft.textRenderer));
 				entries.add(new VanillaButtonWidget(0, 8, 0, 0, AxolotlClientWaypoints.tr("edit_waypoint"), btn ->
 					minecraft.openScreen(new EditWaypointScreen(parent, waypoint))));
-				if (AxolotlClientWaypoints.playerHasOp()) {
+				/*if (AxolotlClientWaypoints.playerHasOp()) {
 					entries.add(new VanillaButtonWidget(0, 8, 0, 0, AxolotlClientWaypoints.tr("teleport_waypoint"), btn -> {
 						minecraft.player.sendChat("/tp %s %s %s".formatted(waypoint.x(), waypoint.y() + 1, waypoint.z()));
 						minecraft.openScreen(null);
 					}));
-				}
+				}*/
 				return entries;
 			}
 		}
