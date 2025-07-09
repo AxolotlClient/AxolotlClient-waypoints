@@ -35,8 +35,11 @@ dependencies {
 		exclude(group = "org.lwjgl")
 		exclude(group = "org.slf4j")
 	}
-	include("io.github.axolotlclient:AxolotlClient-config:${project.property("config")}+$minecraftVersion}")
+	include("io.github.axolotlclient:AxolotlClient-config:${project.property("config")}+$minecraftVersion")
 	modImplementation("io.github.axolotlclient.AxolotlClient-config:AxolotlClientConfig-common:${project.property("config")}")
+
+	modImplementation("io.github.axolotlclient:AxolotlClient:3.1.4+$minecraftVersion")
+	compileOnly("io.github.axolotlclient.AxolotlClient:AxolotlClient-common:3.1.4")
 
 	ploceus.dependOsl(osl)
 

@@ -85,7 +85,7 @@ subprojects {
 					return@forEach
 				}
 				// check if it's the current version, if it is we don't archive it
-				if (project.version.toString().contains(oldVer.substring(oldVer.indexOf("-")+1))) {
+				if (project.version.toString().contains(oldVer.removePrefix(project.property("archives_base_name") as String).substring(1))) {
 					return@forEach
 				}
 				archiveDir.createDirectories()

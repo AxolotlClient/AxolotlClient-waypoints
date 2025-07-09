@@ -1,7 +1,7 @@
 /*
  * Copyright © 2025 moehreag <moehreag@gmail.com> & Contributors
  *
- * This file is part of AxolotlClient.
+ * This file is part of AxolotlClient (Waypoints Mod).
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -39,7 +39,6 @@ import io.github.axolotlclient.AxolotlClientConfig.impl.options.BooleanOption;
 import io.github.axolotlclient.AxolotlClientConfig.impl.util.ConfigStyles;
 import io.github.axolotlclient.waypoints.map.Minimap;
 import io.github.axolotlclient.waypoints.map.WorldMapScreen;
-import io.github.axolotlclient.waypoints.mixin.MinecraftServerAccessor;
 import io.github.axolotlclient.waypoints.waypoints.Waypoint;
 import io.github.axolotlclient.waypoints.waypoints.WaypointRenderer;
 import io.github.axolotlclient.waypoints.waypoints.WaypointStorage;
@@ -52,17 +51,17 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.options.KeyBinding;
 import net.minecraft.locale.I18n;
-import net.minecraft.network.packet.c2s.play.CommandSuggestionsC2SPacket;
 import net.minecraft.resource.Identifier;
 import net.ornithemc.osl.keybinds.api.KeyBindingEvents;
 import net.ornithemc.osl.lifecycle.api.client.MinecraftClientEvents;
 import org.lwjgl.input.Keyboard;
 
 @Slf4j
-@SuppressWarnings("DataFlowIssue")
 public class AxolotlClientWaypoints implements ClientModInitializer {
 
 	public static final String MODID = "axolotlclient_waypoints";
+	public static final Path OPTIONS_PATH = FabricLoader.getInstance().getConfigDir().resolve(MODID).resolve("options.json");
+	public static final boolean AXOLOTLCLIENT_PRESENT = FabricLoader.getInstance().isModLoaded("axolotlclient");
 	private static final Path MOD_STORAGE_DIR = FabricLoader.getInstance().getGameDir().resolve("." + MODID);
 	public static final Minimap MINIMAP = new Minimap();
 	public static final WaypointStorage WAYPOINT_STORAGE = new WaypointStorage();
@@ -91,7 +90,7 @@ public class AxolotlClientWaypoints implements ClientModInitializer {
 			log.warn("Failed to create config dir, options may not save correctly!", e);
 		}
 		ConfigManager configManager;
-		AxolotlClientConfig.getInstance().register(configManager = new VersionedJsonConfigManager(FabricLoader.getInstance().getConfigDir().resolve(MODID).resolve("options.json"), category, 1,
+		AxolotlClientConfig.getInstance().register(configManager = new VersionedJsonConfigManager(OPTIONS_PATH, category, 1,
 			(oldVersion, newVersion, rootCategory, json) -> json));
 		configManager.load();
 		configManager.save();

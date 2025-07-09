@@ -1,7 +1,7 @@
 /*
  * Copyright © 2025 moehreag <moehreag@gmail.com> & Contributors
  *
- * This file is part of AxolotlClient.
+ * This file is part of AxolotlClient (Waypoints Mod).
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -63,6 +63,8 @@ import net.minecraft.resources.ResourceLocation;
 public class AxolotlClientWaypoints implements ClientModInitializer {
 
 	public static final String MODID = "axolotlclient_waypoints";
+	public static final Path OPTIONS_PATH = FabricLoader.getInstance().getConfigDir().resolve(MODID).resolve("options.json");
+	public static final boolean AXOLOTLCLIENT_PRESENT = FabricLoader.getInstance().isModLoaded("axolotlclient");
 	private static final Path MOD_STORAGE_DIR = FabricLoader.getInstance().getGameDir().resolve("." + MODID);
 	public static final Minimap MINIMAP = new Minimap();
 	public static final WaypointStorage WAYPOINT_STORAGE = new WaypointStorage();
@@ -91,7 +93,7 @@ public class AxolotlClientWaypoints implements ClientModInitializer {
 			log.warn("Failed to create config dir, options may not save correctly!", e);
 		}
 		ConfigManager configManager;
-		AxolotlClientConfig.getInstance().register(configManager = new VersionedJsonConfigManager(FabricLoader.getInstance().getConfigDir().resolve(MODID).resolve("options.json"), category, 1,
+		AxolotlClientConfig.getInstance().register(configManager = new VersionedJsonConfigManager(OPTIONS_PATH, category, 1,
 			(oldVersion, newVersion, rootCategory, json) -> json));
 		configManager.load();
 		configManager.save();

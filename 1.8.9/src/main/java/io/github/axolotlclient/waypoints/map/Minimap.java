@@ -1,7 +1,7 @@
 /*
  * Copyright © 2025 moehreag <moehreag@gmail.com> & Contributors
  *
- * This file is part of AxolotlClient.
+ * This file is part of AxolotlClient (Waypoints Mod).
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -24,19 +24,26 @@ package io.github.axolotlclient.waypoints.map;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.mojang.blaze3d.platform.GlStateManager;
+import io.github.axolotlclient.AxolotlClientConfig.api.AxolotlClientConfig;
 import io.github.axolotlclient.AxolotlClientConfig.api.options.OptionCategory;
 import io.github.axolotlclient.AxolotlClientConfig.api.util.Colors;
+import io.github.axolotlclient.AxolotlClientConfig.impl.managers.JsonConfigManager;
 import io.github.axolotlclient.AxolotlClientConfig.impl.options.BooleanOption;
 import io.github.axolotlclient.AxolotlClientConfig.impl.options.ColorOption;
 import io.github.axolotlclient.AxolotlClientConfig.impl.options.IntegerOption;
 import io.github.axolotlclient.AxolotlClientConfig.impl.util.DrawUtil;
+import io.github.axolotlclient.modules.hud.HudManager;
+import io.github.axolotlclient.modules.hud.gui.component.HudEntry;
 import io.github.axolotlclient.waypoints.AxolotlClientWaypoints;
 import io.github.axolotlclient.waypoints.util.ARGB;
 import io.github.axolotlclient.waypoints.waypoints.Waypoint;
+import lombok.Getter;
+import lombok.Setter;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.material.MapColor;
 import net.minecraft.block.state.BlockState;
@@ -53,13 +60,13 @@ import org.joml.Vector3f;
 
 public class Minimap {
 
-	private static final ColorOption outlineColor = new ColorOption("outline_color", Colors.WHITE);
-	private static final BooleanOption minimapOutline = new BooleanOption("minimap_outline", true);
-	public static final IntegerOption arrowScale = new IntegerOption("arrow_scale", 2, 1, 4);
-	private static final BooleanOption lockMapToNorth = new BooleanOption("lock_map_north", true);
-	private static final BooleanOption enabled = new BooleanOption("enabled", true);
-	private static final IntegerOption mapScale = new IntegerOption("map_scale", 1, 1, 5);
-	private static final BooleanOption showWaypoints = new BooleanOption("show_waypoints", true);
+	public final ColorOption outlineColor = new ColorOption("outline_color", Colors.WHITE);
+	public final BooleanOption minimapOutline = new BooleanOption("minimap_outline", true);
+	public final IntegerOption arrowScale = new IntegerOption("arrow_scale", 2, 1, 4);
+	private final BooleanOption lockMapToNorth = new BooleanOption("lock_map_north", true);
+	private final BooleanOption enabled = new BooleanOption("enabled", true);
+	private final IntegerOption mapScale = new IntegerOption("map_scale", 1, 1, 5);
+	private final BooleanOption showWaypoints = new BooleanOption("show_waypoints", true);
 	//public static final BooleanOption useTextureSampling = new BooleanOption("use_texture_sampling", false);
 	private static final OptionCategory minimap = OptionCategory.create("minimap");
 	final int radius = 64, size = radius * 2;
@@ -68,8 +75,11 @@ public class Minimap {
 	private int[] pixels;
 	public long updateDuration = -1;
 	private DynamicTexture tex;
+	@Getter
+	@Setter
 	private int x, y;
 	private int mapCenterX, mapCenterZ;
+	private boolean usingHud;
 	private final Matrix4fStack matrixStack = new Matrix4fStack(5);
 
 	private final Minecraft minecraft = Minecraft.getInstance();
@@ -77,6 +87,27 @@ public class Minimap {
 	public void init() {
 		minimap.add(enabled, /* useTextureSampling,*/ lockMapToNorth, arrowScale, minimapOutline, outlineColor, mapScale, showWaypoints);
 		AxolotlClientWaypoints.category.add(Minimap.minimap);
+		if (AxolotlClientWaypoints.AXOLOTLCLIENT_PRESENT) {
+			usingHud = true;
+			var hud = new MinimapHudEntry(this);
+			hud.setEnabled(true);
+			var hudConfigManager = new JsonConfigManager(AxolotlClientWaypoints.OPTIONS_PATH.resolveSibling(hud.getId().getPath()+".json"), hud.getAllOptions());
+			hudConfigManager.suppressName("x");
+			hudConfigManager.suppressName("y");
+			hudConfigManager.suppressName(minimapOutline.getName());
+			hudConfigManager.suppressName(outlineColor.getName());
+			AxolotlClientConfig.getInstance().register(hudConfigManager);
+			Runtime.getRuntime().addShutdownHook(new Thread(hudConfigManager::save));
+			minimap.add(hud.getAllOptions(), false);
+			try {
+				var f = HudManager.class.getDeclaredField("entries");
+				f.setAccessible(true);
+				@SuppressWarnings("unchecked") var entries = (Map<Identifier, HudEntry>) f.get(HudManager.getInstance());
+				entries.put(hud.getId(), hud);
+			} catch (Exception ignored) {
+				usingHud = false;
+			}
+		}
 	}
 
 	public boolean isEnabled() {
@@ -91,7 +122,7 @@ public class Minimap {
 	}
 
 	public void renderMapOverlay() {
-		if (!isEnabled()) {
+		if (!isEnabled() || usingHud) {
 			return;
 		}
 		var guiWidth = new Window(minecraft).getWidth();
@@ -107,8 +138,10 @@ public class Minimap {
 			}
 			this.y += 20;
 		}*/
-		final int x = this.x;
-		final int y = this.y;
+		renderMap();
+	}
+
+	public void renderMap() {
 		matrixStack.clear().pushMatrix();
 		GlStateManager.pushMatrix();
 		{
@@ -132,7 +165,7 @@ public class Minimap {
 			DrawUtil.popScissor();
 		}
 
-		if (minimapOutline.get()) {
+		if (minimapOutline.get() && !usingHud) {
 			DrawUtil.outlineRect(x, y, size, size, outlineColor.get().toInt());
 		}
 		if (showWaypoints.get()) {

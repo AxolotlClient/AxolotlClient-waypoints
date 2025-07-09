@@ -1,7 +1,7 @@
 /*
  * Copyright © 2025 moehreag <moehreag@gmail.com> & Contributors
  *
- * This file is part of AxolotlClient.
+ * This file is part of AxolotlClient (Waypoints Mod).
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -111,7 +111,7 @@ public class WorldMapScreen extends Screen {
 		renderMapWaypoints(guiGraphics, mouseX, mouseY);
 
 		guiGraphics.pose().last().pose().rotate((float) (((minecraft.player.getVisualRotationYInDegrees() + 180) / 180) * Math.PI), 0, 0, 1);
-		guiGraphics.pose().scale(0.5f * Minimap.arrowScale.get(), 0.5f * Minimap.arrowScale.get(), 1);
+		guiGraphics.pose().scale(0.5f * AxolotlClientWaypoints.MINIMAP.arrowScale.get(), 0.5f * AxolotlClientWaypoints.MINIMAP.arrowScale.get(), 1);
 		int arrowSize = 15;
 		guiGraphics.pose().translate(-arrowSize / 2f, -arrowSize / 2f, 0);
 		guiGraphics.blit(Minimap.arrowLocation, 0, 0, 0, 0, arrowSize, arrowSize, arrowSize, arrowSize);
