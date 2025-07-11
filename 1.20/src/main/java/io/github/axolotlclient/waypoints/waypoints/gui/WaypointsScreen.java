@@ -24,7 +24,6 @@ package io.github.axolotlclient.waypoints.waypoints.gui;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.function.Consumer;
 
 import io.github.axolotlclient.waypoints.AxolotlClientWaypoints;
@@ -39,8 +38,6 @@ import net.minecraft.client.gui.layouts.LayoutElement;
 import net.minecraft.client.gui.narration.NarratableEntry;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.CommonComponents;
-import net.minecraft.server.MinecraftServer;
-import net.minecraft.world.level.storage.WorldData;
 
 public class WaypointsScreen extends Screen {
 
@@ -72,7 +69,7 @@ public class WaypointsScreen extends Screen {
 		addRenderableWidget(entries);
 		haF.visitWidgets(this::addRenderableWidget);
 
-		entries.loadEntries(AxolotlClientWaypoints.getCurrentWaypoints(true, false));
+		entries.loadEntries(AxolotlClientWaypoints.getCurrentWaypoints(false));
 	}
 
 	@Override

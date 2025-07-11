@@ -27,7 +27,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Base64;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
@@ -128,23 +127,13 @@ public class AxolotlClientWaypoints implements ClientModInitializer {
 	}
 
 	public static List<Waypoint> getCurrentWaypoints() {
-		return getCurrentWaypoints(true, true);
+		return getCurrentWaypoints(true);
 	}
 
-	public static List<Waypoint> getCurrentWaypoints(boolean world, boolean dimension) {
+	public static List<Waypoint> getCurrentWaypoints(boolean dimension) {
 		var mc = Minecraft.getInstance();
-		String str = null;
-		if (world) {
-			if (mc.getCurrentServerEntry() != null) {
-				str = mc.getCurrentServerEntry().address;
-			} else if (mc.getServer() != null) {
-				str = mc.getServer().getWorldSaveName();
-			} else {
-				return Collections.emptyList();
-			}
-		}
 		var player = mc.player;
-		return WAYPOINT_STORAGE.getCurrentlyAvailableWaypoints(str, dimension ? String.valueOf(mc.world.dimension.getName()) : null).stream()
+		return WAYPOINT_STORAGE.getCurrentlyAvailableWaypoints(dimension ? String.valueOf(mc.world.dimension.getName()) : null).stream()
 			.sorted(Comparator.comparingDouble(w -> w.squaredDistTo(player.x, player.y, player.z)))
 			.toList();
 	}

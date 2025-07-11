@@ -25,7 +25,7 @@ package io.github.axolotlclient.waypoints.waypoints;
 import io.github.axolotlclient.AxolotlClientConfig.api.util.Color;
 import org.joml.Vector3f;
 
-public record Waypoint(String world, String dimension, double x, double y, double z, Color color, String name,
+public record Waypoint(String dimension, double x, double y, double z, Color color, String name,
 					   String display) {
 
 	public double distTo(double x, double y, double z) {

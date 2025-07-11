@@ -60,7 +60,7 @@ public class WaypointsScreen extends io.github.axolotlclient.AxolotlClientConfig
 		addDrawableChild(new VanillaButtonWidget(width / 2 - 150 - 2, height - 33 / 2 - 20 / 2, 150, 20, AxolotlClientWaypoints.tr("create_waypoint"), btn -> minecraft.openScreen(new CreateWaypointScreen(this))));
 		addDrawableChild(new VanillaButtonWidget(width / 2 + 2, height - 33 / 2 - 20 / 2, 150, 20, I18n.translate("gui.done"), btn -> onClose()));
 
-		entries.loadEntries(AxolotlClientWaypoints.getCurrentWaypoints(true, false));
+		entries.loadEntries(AxolotlClientWaypoints.getCurrentWaypoints(false));
 	}
 
 	public void onClose() {

@@ -47,5 +47,6 @@
 	"axolotlclient_waypoints.context_menu": "Context Menu",
 	"axolotlclient_waypoints.teleport_waypoint": "Teleport",
 	"axolotlclient_waypoints.player_y": "Current Player Y",
-	"minimap_hud": "Minimap (Hud Entry)"
+	"minimap_hud": "Minimap (Hud Entry)",
+	"show_cardinal_directions": "Show Cardinal Directions"
 }

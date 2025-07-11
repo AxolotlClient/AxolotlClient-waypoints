@@ -72,6 +72,7 @@ public class Minimap {
 	private final IntegerOption mapScale = new IntegerOption("map_scale", 1, 1, 5);
 	private final BooleanOption showWaypoints = new BooleanOption("show_waypoints", true);
 	//public static final BooleanOption useTextureSampling = new BooleanOption("use_texture_sampling", false);
+	private final BooleanOption showCardinalDirections = new BooleanOption("show_cardinal_directions", true);
 	private static final OptionCategory minimap = OptionCategory.create("minimap");
 	final int radius = 64, size = radius * 2;
 	private static final ResourceLocation texLocation = AxolotlClientWaypoints.rl("minimap");
@@ -88,18 +89,19 @@ public class Minimap {
 	private final Minecraft minecraft = Minecraft.getInstance();
 
 	public void init() {
-		minimap.add(enabled, /* useTextureSampling,*/ lockMapToNorth, arrowScale, minimapOutline, outlineColor, mapScale, showWaypoints);
+		minimap.add(enabled, /* useTextureSampling,*/ lockMapToNorth, arrowScale, minimapOutline, outlineColor, mapScale, showWaypoints, showCardinalDirections);
 		AxolotlClientWaypoints.category.add(Minimap.minimap);
 		if (AxolotlClientWaypoints.AXOLOTLCLIENT_PRESENT) {
 			usingHud = true;
 			var hud = new MinimapHudEntry(this);
 			hud.setEnabled(true);
-			var hudConfigManager = new JsonConfigManager(AxolotlClientWaypoints.OPTIONS_PATH.resolveSibling(hud.getId().getPath()+".json"), hud.getAllOptions());
+			var hudConfigManager = new JsonConfigManager(AxolotlClientWaypoints.OPTIONS_PATH.resolveSibling(hud.getId().getPath() + ".json"), hud.getAllOptions());
 			hudConfigManager.suppressName("x");
 			hudConfigManager.suppressName("y");
 			hudConfigManager.suppressName(minimapOutline.getName());
 			hudConfigManager.suppressName(outlineColor.getName());
 			AxolotlClientConfig.getInstance().register(hudConfigManager);
+			hudConfigManager.load();
 			Runtime.getRuntime().addShutdownHook(new Thread(hudConfigManager::save));
 			minimap.add(hud.getAllOptions(), false);
 			try {
@@ -170,6 +172,34 @@ public class Minimap {
 		}
 		if (showWaypoints.get()) {
 			renderMapWaypoints(guiGraphics);
+		}
+		if (showCardinalDirections.get()) {
+			Vector3f pos = new Vector3f();
+			guiGraphics.pose().pushPose();
+			var directions = new String[]{"N", "E", "S", "W"};
+			for (int i : new int[]{-2, 1, 2, -1}) {
+				var label = directions[i < 0 ? i + 2 : i + 1];
+				var labelWidth = minecraft.font.width(label);
+				var labelHeight = minecraft.font.lineHeight;
+				guiGraphics.pose().pushPose();
+				guiGraphics.pose().translate(x + radius, y + radius, 0);
+				if (!lockMapToNorth.get()) {
+					guiGraphics.pose().last().pose().rotate((float) -(((minecraft.player.getVisualRotationYInDegrees() + 180) / 180) * Math.PI), 0, 0, 1);
+				}
+				guiGraphics.pose().translate((i % 2) * size, ((int) (i / 2f)) * size, 0);
+				pos.zero();
+				guiGraphics.pose().last().pose().transformPosition(pos);
+				guiGraphics.pose().popPose();
+				pos.x = Mth.clamp(pos.x, x, x + size);
+				pos.y = Mth.clamp(pos.y, y, y + size);
+				guiGraphics.pose().pushPose();
+				guiGraphics.pose().last().pose().translate(pos);
+				guiGraphics.pose().scale(0.5f, 0.5f, 1);
+				guiGraphics.fill(-(labelWidth / 2 + 2), -(labelHeight / 2 + 2), labelWidth / 2 + 2, labelHeight / 2 + 2, 0x77888888);
+				guiGraphics.drawString(minecraft.font, label, -labelWidth / 2, -labelHeight / 2, -1);
+				guiGraphics.pose().popPose();
+			}
+			guiGraphics.pose().popPose();
 		}
 
 		guiGraphics.pose().pushPose();

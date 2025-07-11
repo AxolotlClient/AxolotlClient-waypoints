@@ -55,8 +55,8 @@ public class WaypointStorage {
 		return waypoints.size();
 	}
 
-	public List<Waypoint> getCurrentlyAvailableWaypoints(String world, String dimension) {
-		return waypoints.stream().filter(w -> world == null || w.world().equals(world)).filter(w -> dimension == null || w.dimension().equals(dimension)).toList();
+	public List<Waypoint> getCurrentlyAvailableWaypoints(String dimension) {
+		return waypoints.stream().filter(w -> dimension == null || w.dimension().equals(dimension)).toList();
 	}
 
 	private Path getCurrentPath() {
@@ -110,7 +110,6 @@ public class WaypointStorage {
 				return;
 			}
 			out.beginObject();
-			out.name("world").value(value.world());
 			out.name("dimension").value(value.dimension());
 			out.name("x").value(value.x());
 			out.name("y").value(value.y());
@@ -125,12 +124,11 @@ public class WaypointStorage {
 		public Waypoint read(JsonReader in) throws IOException {
 			double x = 0, y = 0, z = 0;
 			Color color = Colors.TRANSPARENT;
-			String world = "", dimension = "", name = "", display = "";
+			String dimension = "", name = "", display = "";
 			in.beginObject();
 			while (in.peek() != JsonToken.END_OBJECT) {
 				String jsonName = in.nextName();
 				switch (jsonName) {
-					case "world" -> world = in.nextString();
 					case "dimension" -> dimension = in.nextString();
 					case "x" -> x = in.nextDouble();
 					case "y" -> y = in.nextDouble();
@@ -138,12 +136,11 @@ public class WaypointStorage {
 					case "color" -> color = Color.parse(in.nextString());
 					case "name" -> name = in.nextString();
 					case "display" -> display = in.nextString();
-					default -> {
-					}
+					default -> in.skipValue();
 				}
 			}
 			in.endObject();
-			return new Waypoint(world, dimension, x, y, z, color, name, display);
+			return new Waypoint(dimension, x, y, z, color, name, display);
 		}
 	}
 }
