@@ -274,7 +274,9 @@ public class WorldMapScreen extends Screen {
 		loadNeighbour(tile, 1, -1, atSurface, caveY, queue, origin);
 		loadNeighbour(tile, 0, -1, atSurface, caveY, queue, origin);
 		if (!queue.isEmpty()) {
-			Lists.reverse(queue).forEach(Runnable::run);
+			for (Runnable runnable : Lists.reverse(queue)) {
+				runnable.run();
+			}
 		}
 	}
 

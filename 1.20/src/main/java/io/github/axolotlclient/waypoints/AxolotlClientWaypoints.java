@@ -78,6 +78,7 @@ public class AxolotlClientWaypoints implements ClientModInitializer {
 
 	@Override
 	public void onInitializeClient() {
+		AxolotlClientWaypointsCommon.init();
 		MINIMAP.init();
 
 		category.add(waypoints);
