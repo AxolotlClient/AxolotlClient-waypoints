@@ -44,11 +44,11 @@ public class MinimapHudEntry extends BoxHudEntry {
 
 	@Override
 	public void renderComponent(float v) {
-		int x = (int) (getX()/getScale()+1);
+		int x = getX()+1;
 		if (minimap.getX() != x) {
 			minimap.setX(x);
 		}
-		int y = (int) (getY()/getScale()+1);
+		int y = getY()+1;
 		if (minimap.getY() != y) {
 			minimap.setY(y);
 		}

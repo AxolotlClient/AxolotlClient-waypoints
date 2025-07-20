@@ -45,7 +45,7 @@ public class EditWaypointScreen extends io.github.axolotlclient.AxolotlClientCon
 	private ClickableWidget save;
 	private final Waypoint toEdit;
 	private final ColorOption color;
-	private String world, dimension, name, display;
+	private String dimension, name, display;
 
 	public EditWaypointScreen(Screen screen, Waypoint toEdit) {
 		super(AxolotlClientWaypoints.tr("edit_waypoint_title"));
@@ -66,20 +66,10 @@ public class EditWaypointScreen extends io.github.axolotlclient.AxolotlClientCon
 		posTitle.setWidth(width);
 		posTitle.setY(33 + 4);
 
-		var worldLabel = addDrawableChild(new StringWidget(AxolotlClientWaypoints.tr("waypoint_position.world_label"), textRenderer));
 		var dimensionLabel = addDrawableChild(new StringWidget(AxolotlClientWaypoints.tr("waypoint_position.dimension"), textRenderer));
 		dimensionLabel.setHeight(20);
-		worldLabel.setHeight(20);
-		worldLabel.setPosition(width / 2 - (dimensionLabel.getWidth() + 150 * 2 + worldLabel.getWidth()) / 2, 33 + 4 + 9 + 4);
-		dimensionLabel.setPosition(worldLabel.getX() + worldLabel.getWidth() + 4 + 150 + 4, worldLabel.getY());
-		var world = addDrawableChild(new TextFieldWidget(textRenderer, worldLabel.getX() + worldLabel.getWidth() + 4, worldLabel.getY(), 150, 20, AxolotlClientWaypoints.tr("waypoint_position.world")));
-		world.setText(toEdit.world());
-		world.active = false;
-		if (this.world != null) {
-			world.setText(this.world);
-		}
-		world.setChangedListener(s -> this.world = s);
-		var dimension = addDrawableChild(new TextFieldWidget(textRenderer, dimensionLabel.getX() + dimensionLabel.getWidth() + 4, worldLabel.getY(), 150, 20, AxolotlClientWaypoints.tr("waypoint_position_dimension")));
+		dimensionLabel.setPosition(width / 2 - (dimensionLabel.getWidth() + 150 + 4) / 2, 33 + 4 + 9 + 4);
+		var dimension = addDrawableChild(new TextFieldWidget(textRenderer, dimensionLabel.getX() + dimensionLabel.getWidth() + 4, dimensionLabel.getY(), 150, 20, AxolotlClientWaypoints.tr("waypoint_position_dimension")));
 		dimension.setText(toEdit.dimension());
 		if (this.dimension != null) {
 			dimension.setText(this.dimension);
@@ -93,7 +83,7 @@ public class EditWaypointScreen extends io.github.axolotlclient.AxolotlClientCon
 		yLabel.setHeight(20);
 		var zLabel = addDrawableChild(new StringWidget(AxolotlClientWaypoints.tr("waypoint_position.z_label"), textRenderer));
 		zLabel.setHeight(20);
-		xLabel.setPosition(width / 2 - (xLabel.getWidth() + 4 + yLabel.getWidth() + 4 + zLabel.getWidth() + (75 + 4) * 3) / 2, worldLabel.getY() + 20 + 4);
+		xLabel.setPosition(width / 2 - (xLabel.getWidth() + 4 + yLabel.getWidth() + 4 + zLabel.getWidth() + (75 + 4) * 3) / 2, dimensionLabel.getY() + 20 + 4);
 		yLabel.setPosition(xLabel.getX() + xLabel.getWidth() + 4 + 75 + 4, xLabel.getY());
 		zLabel.setPosition(yLabel.getX() + yLabel.getWidth() + 4 + 75 + 4, yLabel.getY());
 		var x = addDrawableChild(new TextFieldWidget(textRenderer, xLabel.getX() + xLabel.getWidth() + 4, xLabel.getY(), 75, 20, AxolotlClientWaypoints.tr("waypoint_position.x")));
@@ -171,7 +161,7 @@ public class EditWaypointScreen extends io.github.axolotlclient.AxolotlClientCon
 
 		int footerY = height - 33 / 2 - 20 / 2;
 		save = addDrawableChild(new VanillaButtonWidget(width / 2 - 2 - 150, footerY, 150, 20, I18n.translate("gui.done"), btn -> {
-			AxolotlClientWaypoints.WAYPOINT_STORAGE.create(new Waypoint(world.getText(), dimension.getText(), this.x, this.y, this.z, color.getOriginal(), name.getText(), display.getText()));
+			AxolotlClientWaypoints.WAYPOINT_STORAGE.create(new Waypoint(dimension.getText(), this.x, this.y, this.z, color.getOriginal(), name.getText(), display.getText()));
 			minecraft.openScreen(parent);
 		}));
 		addDrawableChild(new VanillaButtonWidget(width / 2 + 20, footerY, 150, 20, I18n.translate("gui.cancel"), btn -> minecraft.openScreen(parent)));

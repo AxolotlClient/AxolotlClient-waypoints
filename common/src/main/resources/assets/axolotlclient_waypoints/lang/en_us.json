@@ -5,8 +5,6 @@
 	"axolotlclient_waypoints.create_waypoint": "Create Waypoint",
 	"axolotlclient_waypoints.waypoint_position": "Waypoint Position",
 	"axolotlclient_waypoints.waypoint_position.dimension": "Dimension:",
-	"axolotlclient_waypoints.waypoint_position.world_label": "World:",
-	"axolotlclient_waypoints.waypoint_position.world": "Waypoint World",
 	"axolotlclient_waypoints.waypoint_position.x": "X Position",
 	"axolotlclient_waypoints.waypoint_position.x_label": "X:",
 	"axolotlclient_waypoints.waypoint_position.y": "Y Position",
@@ -48,5 +46,9 @@
 	"axolotlclient_waypoints.teleport_waypoint": "Teleport",
 	"axolotlclient_waypoints.player_y": "Current Player Y",
 	"minimap_hud": "Minimap (Hud Entry)",
-	"show_cardinal_directions": "Show Cardinal Directions"
+	"show_cardinal_directions": "Show Cardinal Directions",
+	"axolotlclient_waypoints.current_config": "Current config: %s",
+	"axolotlclient_waypoints.current_config_unavailable": "Config unavailable, no options are configured.",
+	"axolotlclient_waypoints.reload_complete": "Reloaded config.",
+	"axolotlclient_waypoints.option_disabled": "This option cannot be changed as it is controlled by the server."
 }

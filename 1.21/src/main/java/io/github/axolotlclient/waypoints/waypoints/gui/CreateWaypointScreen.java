@@ -33,7 +33,6 @@ import io.github.axolotlclient.AxolotlClientConfig.impl.options.StringArrayOptio
 import io.github.axolotlclient.AxolotlClientConfig.impl.ui.vanilla.widgets.ColorWidget;
 import io.github.axolotlclient.AxolotlClientConfig.impl.ui.vanilla.widgets.StringArrayWidget;
 import io.github.axolotlclient.waypoints.AxolotlClientWaypoints;
-import io.github.axolotlclient.waypoints.mixin.MinecraftServerAccessor;
 import io.github.axolotlclient.waypoints.waypoints.Waypoint;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -82,14 +81,6 @@ public class CreateWaypointScreen extends Screen {
 			var contents = haFL.addToContents(LinearLayout.vertical()).spacing(4);
 			contents.addChild(new StringWidget(AxolotlClientWaypoints.tr("waypoint_position"), font)).alignCenter().setWidth(haFL.getWidth());
 			var dimensionLine = contents.addChild(LinearLayout.horizontal()).spacing(4);
-			dimensionLine.addChild(new StringWidget(AxolotlClientWaypoints.tr("waypoint_position.world_label"), font)).setHeight(20);
-			var world = dimensionLine.addChild(new EditBox(font, 150, 20, AxolotlClientWaypoints.tr("waypoint_position.world")));
-			if (singleplayer) {
-				world.setValue(((MinecraftServerAccessor) minecraft.getSingleplayerServer()).getStorageSource().getLevelId());
-			} else {
-				world.setValue(minecraft.getCurrentServer().ip);
-			}
-			world.active = false;
 			dimensionLine.addChild(new StringWidget(AxolotlClientWaypoints.tr("waypoint_position.dimension"), font)).setHeight(20);
 			Supplier<String> dimensionSupplier;
 			if (singleplayer) {
@@ -174,7 +165,7 @@ public class CreateWaypointScreen extends Screen {
 
 			var footer = haFL.addToFooter(LinearLayout.horizontal()).spacing(4);
 			create = footer.addChild(Button.builder(AxolotlClientWaypoints.tr("create_waypoint"), btn -> {
-				AxolotlClientWaypoints.WAYPOINT_STORAGE.create(new Waypoint(world.getValue(), dimensionSupplier.get(), this.x, this.y, this.z, color.getOriginal(), name.getValue(), display.getValue()));
+				AxolotlClientWaypoints.WAYPOINT_STORAGE.create(new Waypoint(dimensionSupplier.get(), this.x, this.y, this.z, color.getOriginal(), name.getValue(), display.getValue()));
 				minecraft.setScreen(parent);
 			}).build());
 			footer.addChild(Button.builder(CommonComponents.GUI_CANCEL, btn -> minecraft.setScreen(parent)).build());

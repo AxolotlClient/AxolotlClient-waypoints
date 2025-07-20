@@ -67,6 +67,7 @@ public class WaypointStorage {
 
 	public void load() {
 		currentSave = getCurrentPath();
+		waypoints.clear();
 		if (Files.exists(currentSave)) {
 			try (var reader = Files.newBufferedReader(currentSave)) {
 				List<Waypoint> loaded = GSON.fromJson(reader, WAYPOINT_LIST_TYPE);

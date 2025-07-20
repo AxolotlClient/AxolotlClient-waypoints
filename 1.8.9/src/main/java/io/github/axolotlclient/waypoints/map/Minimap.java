@@ -33,13 +33,14 @@ import io.github.axolotlclient.AxolotlClientConfig.api.AxolotlClientConfig;
 import io.github.axolotlclient.AxolotlClientConfig.api.options.OptionCategory;
 import io.github.axolotlclient.AxolotlClientConfig.api.util.Colors;
 import io.github.axolotlclient.AxolotlClientConfig.impl.managers.JsonConfigManager;
-import io.github.axolotlclient.AxolotlClientConfig.impl.options.BooleanOption;
 import io.github.axolotlclient.AxolotlClientConfig.impl.options.ColorOption;
 import io.github.axolotlclient.AxolotlClientConfig.impl.options.IntegerOption;
 import io.github.axolotlclient.AxolotlClientConfig.impl.util.DrawUtil;
 import io.github.axolotlclient.modules.hud.HudManager;
 import io.github.axolotlclient.modules.hud.gui.component.HudEntry;
 import io.github.axolotlclient.waypoints.AxolotlClientWaypoints;
+import io.github.axolotlclient.waypoints.AxolotlClientWaypointsCommon;
+import io.github.axolotlclient.waypoints.BooleanOption;
 import io.github.axolotlclient.waypoints.util.ARGB;
 import io.github.axolotlclient.waypoints.waypoints.Waypoint;
 import lombok.Getter;
@@ -64,7 +65,7 @@ public class Minimap {
 	public final BooleanOption minimapOutline = new BooleanOption("minimap_outline", true);
 	public final IntegerOption arrowScale = new IntegerOption("arrow_scale", 2, 1, 4);
 	private final BooleanOption lockMapToNorth = new BooleanOption("lock_map_north", true);
-	private final BooleanOption enabled = new BooleanOption("enabled", true);
+	public final BooleanOption enabled = new BooleanOption("enabled", true);
 	private final IntegerOption mapScale = new IntegerOption("map_scale", 1, 1, 5);
 	private final BooleanOption showWaypoints = new BooleanOption("show_waypoints", true);
 	//public static final BooleanOption useTextureSampling = new BooleanOption("use_texture_sampling", false);
@@ -81,6 +82,7 @@ public class Minimap {
 	private int x, y;
 	private int mapCenterX, mapCenterZ;
 	private boolean usingHud;
+	public boolean allowCaves = true;
 	private final Matrix4fStack matrixStack = new Matrix4fStack(5);
 
 	private final Minecraft minecraft = Minecraft.getInstance();
@@ -88,11 +90,11 @@ public class Minimap {
 	public void init() {
 		minimap.add(enabled, /* useTextureSampling,*/ lockMapToNorth, arrowScale, minimapOutline, outlineColor, mapScale, showWaypoints, showCardinalDirections);
 		AxolotlClientWaypoints.category.add(Minimap.minimap);
-		if (AxolotlClientWaypoints.AXOLOTLCLIENT_PRESENT) {
+		if (AxolotlClientWaypointsCommon.AXOLOTLCLIENT_PRESENT) {
 			usingHud = true;
 			var hud = new MinimapHudEntry(this);
 			hud.setEnabled(true);
-			var hudConfigManager = new JsonConfigManager(AxolotlClientWaypoints.OPTIONS_PATH.resolveSibling(hud.getId().getPath() + ".json"), hud.getAllOptions());
+			var hudConfigManager = new JsonConfigManager(AxolotlClientWaypointsCommon.OPTIONS_PATH.resolveSibling(hud.getId().getPath() + ".json"), hud.getAllOptions());
 			hudConfigManager.suppressName("x");
 			hudConfigManager.suppressName("y");
 			hudConfigManager.suppressName(minimapOutline.getName());
@@ -124,7 +126,7 @@ public class Minimap {
 	}
 
 	public void renderMapOverlay() {
-		if (!isEnabled() || usingHud) {
+		if (usingHud) {
 			return;
 		}
 		var guiWidth = new Window(minecraft).getWidth();
@@ -144,6 +146,9 @@ public class Minimap {
 	}
 
 	public void renderMap() {
+		if (!isEnabled()) {
+			return;
+		}
 		matrixStack.clear().pushMatrix();
 		GlStateManager.pushMatrix();
 		{
@@ -176,7 +181,7 @@ public class Minimap {
 		if (showCardinalDirections.get()) {
 			Vector3f pos = new Vector3f();
 			matrixStack.pushMatrix();
-			var directions = new String[]{"N", "E", "S", "W"};
+			var directions = new String[]{"N", "W", "E", "S"};
 			for (int i : new int[]{-2, 1, 2, -1}) {
 				var label = directions[i < 0 ? i + 2 : i + 1];
 				var labelWidth = minecraft.textRenderer.getWidth(label);

@@ -24,6 +24,7 @@ package io.github.axolotlclient.waypoints.mixin;
 
 import io.github.axolotlclient.waypoints.AxolotlClientWaypoints;
 import net.minecraft.client.network.handler.ClientPlayNetworkHandler;
+import net.minecraft.network.packet.s2c.play.ChatMessageS2CPacket;
 import net.minecraft.network.packet.s2c.play.LoginS2CPacket;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -36,5 +37,10 @@ public class ClientPacketListenerMixin {
 	@Inject(method = "handleLogin", at = @At("TAIL"))
 	private void onLogin(LoginS2CPacket loginS2CPacket, CallbackInfo ci) {
 		AxolotlClientWaypoints.WAYPOINT_STORAGE.load();
+	}
+
+	@Inject(method = "handleChatMessage", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/chat/ChatGui;addMessage(Lnet/minecraft/text/Text;)V"))
+	private void onChatMessage(ChatMessageS2CPacket chatMessageS2CPacket, CallbackInfo ci) {
+		AxolotlClientWaypoints.NETWORK_LISTENER.onReceiveChatMessage(chatMessageS2CPacket.getMessage().getFormattedString());
 	}
 }

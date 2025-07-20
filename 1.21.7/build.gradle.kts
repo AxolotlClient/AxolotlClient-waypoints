@@ -39,7 +39,7 @@ dependencies {
 		officialMojangMappings {
 			nameSyntheticMembers = true
 		}
-		parchment("org.parchmentmc.data:parchment-1.21.5:2025.06.15@zip")
+		parchment("org.parchmentmc.data:parchment-1.21.8:2025.07.18@zip")
 	})
 
 	modImplementation("net.fabricmc:fabric-loader:${project.property("fabric_loader")}")
@@ -92,6 +92,10 @@ java {
 
 tasks.runClient {
 	classpath(sourceSets.getByName("test").runtimeClasspath)
+	jvmArgs("-XX:+AllowEnhancedClassRedefinition")
+}
+
+tasks.runServer {
 	jvmArgs("-XX:+AllowEnhancedClassRedefinition")
 }
 

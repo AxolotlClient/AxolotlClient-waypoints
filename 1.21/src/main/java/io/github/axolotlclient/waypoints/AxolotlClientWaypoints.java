@@ -35,11 +35,11 @@ import io.github.axolotlclient.AxolotlClientConfig.api.AxolotlClientConfig;
 import io.github.axolotlclient.AxolotlClientConfig.api.manager.ConfigManager;
 import io.github.axolotlclient.AxolotlClientConfig.api.options.OptionCategory;
 import io.github.axolotlclient.AxolotlClientConfig.impl.managers.VersionedJsonConfigManager;
-import io.github.axolotlclient.AxolotlClientConfig.impl.options.BooleanOption;
 import io.github.axolotlclient.AxolotlClientConfig.impl.util.ConfigStyles;
 import io.github.axolotlclient.waypoints.map.Minimap;
 import io.github.axolotlclient.waypoints.map.WorldMapScreen;
 import io.github.axolotlclient.waypoints.mixin.MinecraftServerAccessor;
+import io.github.axolotlclient.waypoints.network.Listener;
 import io.github.axolotlclient.waypoints.waypoints.Waypoint;
 import io.github.axolotlclient.waypoints.waypoints.WaypointRenderer;
 import io.github.axolotlclient.waypoints.waypoints.WaypointStorage;
@@ -61,23 +61,20 @@ import net.minecraft.resources.ResourceLocation;
 @SuppressWarnings("DataFlowIssue")
 public class AxolotlClientWaypoints implements ClientModInitializer {
 
-	public static final String MODID = "axolotlclient_waypoints";
-	public static final Path OPTIONS_PATH = FabricLoader.getInstance().getConfigDir().resolve(MODID).resolve("options.json");
-	public static final boolean AXOLOTLCLIENT_PRESENT = FabricLoader.getInstance().isModLoaded("axolotlclient");
-	private static final Path MOD_STORAGE_DIR = FabricLoader.getInstance().getGameDir().resolve("." + MODID);
 	public static final Minimap MINIMAP = new Minimap();
 	public static final WaypointStorage WAYPOINT_STORAGE = new WaypointStorage();
 	public static final WaypointRenderer WAYPOINT_RENDERER = new WaypointRenderer();
+	public static final Listener NETWORK_LISTENER = new Listener();
 
-	public static OptionCategory category = OptionCategory.create(MODID);
+	public static OptionCategory category = OptionCategory.create(AxolotlClientWaypointsCommon.MODID);
 	private final OptionCategory waypoints = OptionCategory.create("waypoints");
 	public static BooleanOption renderWaypoints = new BooleanOption("render_waypoints", true);
 	public static BooleanOption renderWaypointsInWorld = new BooleanOption("render_waypoints_in_world", true);
 	public static BooleanOption renderOutOfViewWaypointsOnScreenEdge = new BooleanOption("render_out_of_view_waypoints", true);
 
-	private final KeyMapping map = new KeyMapping(MODID + ".world_map", InputConstants.KEY_M, MODID);
-	private final KeyMapping manageWaypoints = new KeyMapping(MODID + ".waypoints_menu", InputConstants.KEY_K, MODID);
-	private final KeyMapping newWaypoint = new KeyMapping(MODID + ".create_waypoint", InputConstants.KEY_N, MODID);
+	private final KeyMapping map = new KeyMapping(AxolotlClientWaypointsCommon.MODID + ".world_map", InputConstants.KEY_M, AxolotlClientWaypointsCommon.MODID);
+	private final KeyMapping manageWaypoints = new KeyMapping(AxolotlClientWaypointsCommon.MODID + ".waypoints_menu", InputConstants.KEY_K, AxolotlClientWaypointsCommon.MODID);
+	private final KeyMapping newWaypoint = new KeyMapping(AxolotlClientWaypointsCommon.MODID + ".create_waypoint", InputConstants.KEY_N, AxolotlClientWaypointsCommon.MODID);
 
 	@Override
 	public void onInitializeClient() {
@@ -87,12 +84,12 @@ public class AxolotlClientWaypoints implements ClientModInitializer {
 		waypoints.add(renderWaypoints, renderWaypointsInWorld, renderOutOfViewWaypointsOnScreenEdge);
 
 		try {
-			Files.createDirectories(FabricLoader.getInstance().getConfigDir().resolve(MODID));
+			Files.createDirectories(FabricLoader.getInstance().getConfigDir().resolve(AxolotlClientWaypointsCommon.MODID));
 		} catch (IOException e) {
 			log.warn("Failed to create config dir, options may not save correctly!", e);
 		}
 		ConfigManager configManager;
-		AxolotlClientConfig.getInstance().register(configManager = new VersionedJsonConfigManager(OPTIONS_PATH, category, 1,
+		AxolotlClientConfig.getInstance().register(configManager = new VersionedJsonConfigManager(AxolotlClientWaypointsCommon.OPTIONS_PATH, category, 1,
 			(oldVersion, newVersion, rootCategory, json) -> json));
 		configManager.load();
 		configManager.save();
@@ -109,6 +106,7 @@ public class AxolotlClientWaypoints implements ClientModInitializer {
 				mc.setScreen(new CreateWaypointScreen(mc.screen));
 			}
 		});
+		NETWORK_LISTENER.init();
 	}
 
 	public static Screen createOptionsScreen(Screen parent) {
@@ -116,15 +114,15 @@ public class AxolotlClientWaypoints implements ClientModInitializer {
 	}
 
 	public static ResourceLocation rl(String path) {
-		return ResourceLocation.fromNamespaceAndPath(MODID, path);
+		return ResourceLocation.fromNamespaceAndPath(AxolotlClientWaypointsCommon.MODID, path);
 	}
 
 	public static Component tr(String key, Object... args) {
-		return Component.translatable(MODID + "." + key, args);
+		return Component.translatable(AxolotlClientWaypointsCommon.MODID + "." + key, args);
 	}
 
 	public static String tra(String key) {
-		return I18n.get(MODID + "." + key);
+		return I18n.get(AxolotlClientWaypointsCommon.MODID + "." + key);
 	}
 
 	public static List<Waypoint> getCurrentWaypoints() {
@@ -157,7 +155,7 @@ public class AxolotlClientWaypoints implements ClientModInitializer {
 		} else {
 			str = ((MinecraftServerAccessor) mc.getSingleplayerServer()).getStorageSource().getLevelId();
 		}
-		return AxolotlClientWaypoints.MOD_STORAGE_DIR.resolve(getB64(str));
+		return AxolotlClientWaypointsCommon.MOD_STORAGE_DIR.resolve(getB64(str));
 	}
 
 	public static boolean playerHasOp() {

@@ -72,9 +72,6 @@ public class EditWaypointScreen extends Screen {
 			var contents = haFL.addToContents(LinearLayout.vertical()).spacing(4);
 			contents.addChild(new StringWidget(AxolotlClientWaypoints.tr("waypoint_position"), font)).alignCenter().setWidth(haFL.getWidth());
 			var dimensionLine = contents.addChild(LinearLayout.horizontal()).spacing(4);
-			dimensionLine.addChild(new StringWidget(AxolotlClientWaypoints.tr("waypoint_position.world_label"), font)).setHeight(20);
-			var world = dimensionLine.addChild(new EditBox(font, 0, 0, 150, 20, AxolotlClientWaypoints.tr("waypoint_position.world")));
-			world.setValue(toEdit.world());
 			dimensionLine.addChild(new StringWidget(AxolotlClientWaypoints.tr("waypoint_position.dimension"), font)).setHeight(20);
 			var dimension = dimensionLine.addChild(new EditBox(font, 0, 0, 150, 20, AxolotlClientWaypoints.tr("waypoint_position_dimension")));
 			dimension.setValue(toEdit.dimension());
@@ -152,7 +149,7 @@ public class EditWaypointScreen extends Screen {
 
 			var footer = haFL.addToFooter(LinearLayout.horizontal()).spacing(4);
 			save = footer.addChild(Button.builder(CommonComponents.GUI_DONE, btn -> {
-				AxolotlClientWaypoints.WAYPOINT_STORAGE.replace(toEdit, new Waypoint(world.getValue(), dimension.getValue(), this.x, this.y, this.z, color.getOriginal(), name.getValue(), display.getValue()));
+				AxolotlClientWaypoints.WAYPOINT_STORAGE.replace(toEdit, new Waypoint(dimension.getValue(), this.x, this.y, this.z, color.getOriginal(), name.getValue(), display.getValue()));
 				minecraft.setScreen(parent);
 			}).build());
 			footer.addChild(Button.builder(CommonComponents.GUI_CANCEL, btn -> minecraft.setScreen(parent)).build());

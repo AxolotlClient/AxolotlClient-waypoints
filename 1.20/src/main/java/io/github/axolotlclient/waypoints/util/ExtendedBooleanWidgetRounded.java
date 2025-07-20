@@ -1,0 +1,24 @@
+package io.github.axolotlclient.waypoints.util;
+
+import io.github.axolotlclient.AxolotlClientConfig.impl.ui.rounded.widgets.BooleanWidget;
+import io.github.axolotlclient.waypoints.AxolotlClientWaypoints;
+import io.github.axolotlclient.waypoints.BooleanOption;
+import net.minecraft.client.gui.components.Tooltip;
+
+public class ExtendedBooleanWidgetRounded extends BooleanWidget {
+	private final BooleanOption option;
+	public ExtendedBooleanWidgetRounded(int x, int y, int width, int height, BooleanOption option) {
+		super(x, y, width, height, option);
+		this.option = option;
+		update();
+	}
+
+	@Override
+	public void update() {
+		super.update();
+		if (option.isForced()) {
+			this.active = false;
+			setTooltip(Tooltip.create(AxolotlClientWaypoints.tr("option_disabled")));
+		}
+	}
+}

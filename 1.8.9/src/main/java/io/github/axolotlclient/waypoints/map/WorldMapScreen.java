@@ -75,11 +75,13 @@ public class WorldMapScreen extends Screen {
 	private final Map<Vector2i, LazyTile> tiles = new ConcurrentHashMap<>();
 	private final Vector3f dragOffset = new Vector3f();
 	private float scale = 1f;
+	public static boolean allowCaves = true, allowCavesNether;
 	private boolean atSurface;
 	private int caveY;
 	private String dimension;
 	private Waypoint hoveredWaypoint = null;
 	private boolean initializedOnce = false;
+	private Runnable optionUpdate;
 	private final TextRenderer font = Minecraft.getInstance().textRenderer;
 	private final Matrix4fStack matrixStack = new Matrix4fStack(16);
 
@@ -209,28 +211,32 @@ public class WorldMapScreen extends Screen {
 
 	private void collectPlayerYData() {
 		var level = minecraft.world;
-		int playerX = (int) (minecraft.player.x + 0.5);
-		int playerZ = (int) (minecraft.player.z + 0.5);
-		var centerChunk = level.getChunkAt(blockToSectionCoord(playerX), blockToSectionCoord(playerZ));
-		var surface = centerChunk.getHeight(playerX & 15, playerZ & 15);
-		BlockPos.Mutable mutableBlockPos = new BlockPos.Mutable(playerX, surface, playerZ);
-		int solidBlocksAbovePlayer = 0;
-		atSurface = false;
-		if (level.dimension.isDark()) {
-			atSurface = (int) (minecraft.player.y + 0.5) >= level.getHeight();
-		} else if (surface + 1 <= (int) (minecraft.player.y + 0.5)) {
-			atSurface = true;
-		} else {
-			while (solidBlocksAbovePlayer <= 3 && surface > (int) (minecraft.player.y + 0.5) && surface > MIN_BUILD_HEIGHT) {
-				BlockState state = centerChunk.getBlockState(mutableBlockPos);
-				mutableBlockPos.set(playerX, surface--, playerZ);
-				if (!(state.getBlock().isTranslucent() || !state.getBlock().isOpaque() || !state.getBlock().isViewBlocking())) {
-					solidBlocksAbovePlayer++;
+		if (allowCaves || (allowCavesNether && level.dimension.isDark())) {
+			int playerX = (int) (minecraft.player.x + 0.5);
+			int playerZ = (int) (minecraft.player.z + 0.5);
+			var centerChunk = level.getChunkAt(blockToSectionCoord(playerX), blockToSectionCoord(playerZ));
+			var surface = centerChunk.getHeight(playerX & 15, playerZ & 15);
+			BlockPos.Mutable mutableBlockPos = new BlockPos.Mutable(playerX, surface, playerZ);
+			int solidBlocksAbovePlayer = 0;
+			atSurface = false;
+			if (level.dimension.isDark()) {
+				atSurface = (int) (minecraft.player.y + 0.5) >= level.getHeight();
+			} else if (surface + 1 <= (int) (minecraft.player.y + 0.5)) {
+				atSurface = true;
+			} else {
+				while (solidBlocksAbovePlayer <= 3 && surface > (int) (minecraft.player.y + 0.5) && surface > MIN_BUILD_HEIGHT) {
+					BlockState state = centerChunk.getBlockState(mutableBlockPos);
+					mutableBlockPos.set(playerX, surface--, playerZ);
+					if (!(state.getBlock().isTranslucent() || !state.getBlock().isOpaque() || !state.getBlock().isViewBlocking())) {
+						solidBlocksAbovePlayer++;
+					}
+				}
+				if (solidBlocksAbovePlayer <= 2) {
+					atSurface = true;
 				}
 			}
-			if (solidBlocksAbovePlayer <= 2) {
-				atSurface = true;
-			}
+		} else {
+			atSurface = true;
 		}
 
 		caveY = (int) (minecraft.player.y + 0.5);
@@ -462,6 +468,21 @@ public class WorldMapScreen extends Screen {
 		addDrawableChild(new DropdownButton(width - 20, 0, 20, 20,
 			AxolotlClientWaypoints.tr("open_dropdown"), (btn, val) -> slider.visible = val));
 		slider.visible = false;
+		optionUpdate = () -> {
+			var allowsCaves = allowCaves || (allowCavesNether && minecraft.world.dimension.isDark());
+			boolean updated = slider.active != allowsCaves;
+			if (updated) {
+				slider.active = allowsCaves;
+				if (!allowsCaves) {
+					atSurface = true;
+					CompletableFuture.runAsync(() -> tiles.values().forEach(t -> t.update(caveY, atSurface, minecraft.world)));
+				} else {
+					slider.applyValue();
+				}
+			}
+		};
+		AxolotlClientWaypoints.NETWORK_LISTENER.postReceive.add(optionUpdate);
+		optionUpdate.run();
 		if (tiles.isEmpty()) {
 			minecraft.submit(() -> {
 				if (!initializedOnce) {
@@ -539,6 +560,9 @@ public class WorldMapScreen extends Screen {
 
 	@Override
 	public void removed() {
+		if (optionUpdate != null) {
+			AxolotlClientWaypoints.NETWORK_LISTENER.postReceive.remove(optionUpdate);
+		}
 		if (minecraft.screen == null) {
 			saveTiles();
 			tiles.values().forEach(LazyTile::release);
