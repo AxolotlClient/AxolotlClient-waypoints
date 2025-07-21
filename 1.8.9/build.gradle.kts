@@ -140,16 +140,17 @@ tasks.modrinth {
 
 modrinth {
 	token = System.getenv("MODRINTH_TOKEN")
-	projectId = "p2rxzX0q"
+	projectId = "s0qWsRJC"
 	versionNumber = "${project.version}"
 	versionType = "release"
 	uploadFile = tasks.remapJar.get()
 	gameVersions.set(listOf(minecraftVersion))
-	loaders.set(listOf("fabric", "quilt"))
+	loaders.set(listOf("ornithe"))
 	additionalFiles.set(listOf(tasks.remapSourcesJar))
 	dependencies {
 		required.project("osl")
 		required.project("moehreag-legacy-lwjgl3")
+		optional.project("axolotlclient")
 	}
 
 	// Changelog fetching: Credit LambdAurora.

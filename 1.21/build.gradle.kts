@@ -115,7 +115,7 @@ tasks.modrinth {
 
 modrinth {
 	token = System.getenv("MODRINTH_TOKEN")
-	projectId = "p2rxzX0q"
+	projectId = "s0qWsRJC"
 	versionNumber = "${project.version}"
 	versionType = "release"
 	uploadFile = tasks.remapJar.get()
@@ -124,6 +124,7 @@ modrinth {
 	additionalFiles.set(listOf(tasks.remapSourcesJar))
 	dependencies {
 		required.project("fabric-api")
+		optional.project("axolotlclient")
 	}
 
 	// Changelog fetching: Credit LambdAurora.

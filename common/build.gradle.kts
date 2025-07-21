@@ -87,6 +87,6 @@ publishing {
 	}
 }
 
-tasks.modrinth {
-	enabled = false
+afterEvaluate {
+	tasks.modrinth.configure {enabled = false}
 }

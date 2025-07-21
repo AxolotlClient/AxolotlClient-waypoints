@@ -163,11 +163,11 @@ public class WorldMapScreen extends Screen {
 		return y;
 	}
 
-	private int getWorldX(int guiX) {
+	private int getWorldX(double guiX) {
 		return MathHelper.floor(minecraft.player.z - ((width / 2f + dragOffset.x()) - guiX) / scale);
 	}
 
-	private int getWorldZ(int guiZ) {
+	private int getWorldZ(double guiZ) {
 		return MathHelper.floor(minecraft.player.z - ((height / 2f + dragOffset.y()) - guiZ) / scale);
 	}
 
@@ -350,8 +350,8 @@ public class WorldMapScreen extends Screen {
 				if (hoveredWaypoint != null) {
 					minecraft.openScreen(new ContextMenuScreen(this, mouseX, mouseY, new ContextMenuScreen.Type.Waypoint(hoveredWaypoint)));
 				} else {
-					int worldX = getWorldX((int) mouseX);
-					int worldZ = getWorldZ((int) mouseY);
+					int worldX = getWorldX(mouseX);
+					int worldZ = getWorldZ(mouseY);
 					minecraft.openScreen(new ContextMenuScreen(this, mouseX, mouseY, new ContextMenuScreen.Type.Map(dimension, worldX, getY(worldX, worldZ), worldZ)));
 				}
 				return true;
@@ -423,6 +423,7 @@ public class WorldMapScreen extends Screen {
 			}
 
 			boolean called = false;
+
 			@Override
 			public boolean mouseScrolled(double mouseX, double mouseY, double amountX, double amountY) {
 				if (called) return false;
