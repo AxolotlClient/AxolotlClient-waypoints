@@ -34,7 +34,7 @@ jobs:
         run: ./gradlew build collectBuilds
 
       - name: Release
-        uses: Kir-Antipov/mc-publish@v3.3
+        uses: Kira-NT/mc-publish@v3.3
         with:
           github-token: "${{ secrets.GH_TOKEN }}"
           changelog-file: "CHANGELOG.md"
