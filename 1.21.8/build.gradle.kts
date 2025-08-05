@@ -5,9 +5,9 @@ plugins {
 	id("io.github.p03w.machete")
 }
 
-val minecraftVersion = "1.21.7"
-val minecraftFriendly = "1.21.7"
-val fapiVersion = "0.128.1"
+val minecraftVersion = "1.21.8"
+val minecraftFriendly = "1.21.8"
+val fapiVersion = "0.129.0"
 
 group = project.property("maven_group") as String
 version = "${project.property("version")}+$minecraftVersion"
@@ -46,14 +46,14 @@ dependencies {
 
 	modImplementation("net.fabricmc.fabric-api:fabric-api:$fapiVersion+$minecraftFriendly")
 
-	modImplementation("io.github.axolotlclient:AxolotlClient-config:${project.property("config")}+$minecraftFriendly") {
+	modImplementation("io.github.axolotlclient:AxolotlClient-config:${project.property("config")}+1.21.7") {
 		exclude(group = "com.terraformersmc")
 		exclude(group = "org.lwjgl")
 	}
-	include("io.github.axolotlclient:AxolotlClient-config:${project.property("config")}+$minecraftFriendly")
+	include("io.github.axolotlclient:AxolotlClient-config:${project.property("config")}+1.21.7")
 	modImplementation("io.github.axolotlclient.AxolotlClient-config:AxolotlClientConfig-common:${project.property("config")}")
 
-	modImplementation("io.github.axolotlclient:AxolotlClient:3.1.4+$minecraftVersion")
+	modImplementation("io.github.axolotlclient:AxolotlClient:3.1.4+1.21.7")
 	compileOnly("io.github.axolotlclient.AxolotlClient:AxolotlClient-common:3.1.4")
 
 	modCompileOnly("com.terraformersmc:modmenu:13.0.0-beta.1")
