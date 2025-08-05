@@ -27,6 +27,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Stream;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -55,8 +56,9 @@ public class WaypointStorage {
 		return waypoints.size();
 	}
 
-	public List<Waypoint> getCurrentlyAvailableWaypoints(String dimension) {
-		return waypoints.stream().filter(w -> dimension == null || w.dimension().equals(dimension)).toList();
+	public Stream<Waypoint> getCurrentlyAvailableWaypoints(String dimension) {
+		if (dimension == null) return waypoints.stream();
+		return waypoints.stream().filter(w -> w.dimension().equals(dimension));
 	}
 
 	private Path getCurrentPath() {

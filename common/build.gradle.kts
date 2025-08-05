@@ -16,12 +16,8 @@ dependencies {
 	})
 	testRuntimeOnly(testCompileOnly(compileOnly("io.github.axolotlclient.AxolotlClient-config:AxolotlClientConfig-common:${project.property("config")}")!!)!!)
 
-	testRuntimeOnly(compileOnly("com.google.guava:guava:17.0")!!)
-	testImplementation(compileOnly("org.apache.httpcomponents:httpclient:4.3.3")!!)
 	testImplementation(compileOnly("com.google.code.gson:gson:2.10")!!)
-	testRuntimeOnly(compileOnly("commons-io:commons-io:2.4")!!)
-	testRuntimeOnly(compileOnly("org.apache.commons:commons-lang3:3.3.2")!!)
-	testRuntimeOnly(compileOnly("org.lwjgl:lwjgl-glfw:3.3.2")!!)
+
 	compileOnly("org.joml:joml:1.10.8")
 	compileOnly("org.slf4j:slf4j-api:1.7.36")
 }

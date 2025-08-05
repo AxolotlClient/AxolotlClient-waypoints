@@ -123,7 +123,7 @@ public class AxolotlClientWaypoints implements ClientModInitializer {
 	public static List<Waypoint> getCurrentWaypoints(boolean dimension) {
 		var mc = Minecraft.getInstance();
 		var pos = mc.player.position().toVector3f();
-		return WAYPOINT_STORAGE.getCurrentlyAvailableWaypoints(dimension ? mc.level.dimension().location().toString() : null).stream()
+		return WAYPOINT_STORAGE.getCurrentlyAvailableWaypoints(dimension ? mc.level.dimension().location().toString() : null)
 			.sorted(Comparator.comparingDouble(w -> w.squaredDistTo(pos)))
 			.toList();
 	}
