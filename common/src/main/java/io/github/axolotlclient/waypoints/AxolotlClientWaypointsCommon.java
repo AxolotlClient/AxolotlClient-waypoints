@@ -25,6 +25,7 @@ package io.github.axolotlclient.waypoints;
 import java.nio.file.Path;
 
 import io.github.axolotlclient.AxolotlClientConfig.api.ui.ConfigUI;
+import io.github.axolotlclient.bridge.util.AxoIdentifier;
 import net.fabricmc.loader.api.FabricLoader;
 
 public class AxolotlClientWaypointsCommon {
@@ -43,5 +44,9 @@ public class AxolotlClientWaypointsCommon {
 			ConfigUI.getInstance().addWidget("vanilla", MODID+".boolean", "io.github.axolotlclient.waypoints.util.ExtendedBooleanWidget");
 			ConfigUI.getInstance().addWidget("rounded", MODID+".boolean", "io.github.axolotlclient.waypoints.util.ExtendedBooleanWidgetRounded");
 		});
+	}
+
+	public static AxoIdentifier rl(String path) {
+		return AxoIdentifier.of(MODID, path);
 	}
 }

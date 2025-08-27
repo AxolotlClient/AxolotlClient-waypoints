@@ -22,32 +22,21 @@
 
 package io.github.axolotlclient.waypoints.map;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.atomic.AtomicBoolean;
-
 import com.mojang.blaze3d.platform.NativeImage;
 import io.github.axolotlclient.AxolotlClientConfig.api.AxolotlClientConfig;
-import io.github.axolotlclient.AxolotlClientConfig.api.options.OptionCategory;
-import io.github.axolotlclient.AxolotlClientConfig.api.util.Colors;
 import io.github.axolotlclient.AxolotlClientConfig.impl.managers.JsonConfigManager;
-import io.github.axolotlclient.AxolotlClientConfig.impl.options.ColorOption;
-import io.github.axolotlclient.AxolotlClientConfig.impl.options.IntegerOption;
+import io.github.axolotlclient.bridge.render.AxoRenderContext;
 import io.github.axolotlclient.modules.hud.HudManager;
-import io.github.axolotlclient.modules.hud.gui.component.HudEntry;
 import io.github.axolotlclient.waypoints.AxolotlClientWaypoints;
 import io.github.axolotlclient.waypoints.AxolotlClientWaypointsCommon;
-import io.github.axolotlclient.waypoints.BooleanOption;
 import io.github.axolotlclient.waypoints.util.ARGB;
 import io.github.axolotlclient.waypoints.waypoints.Waypoint;
-import lombok.Getter;
-import lombok.Setter;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.minecraft.Util;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.renderer.BiomeColors;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.core.BlockPos;
@@ -65,27 +54,13 @@ import net.minecraft.world.level.material.MapColor;
 import org.joml.Vector2f;
 
 @SuppressWarnings("DataFlowIssue")
-public class Minimap {
+public class Minimap extends MinimapCommon {
 
-	public final ColorOption outlineColor = new ColorOption("outline_color", Colors.WHITE);
-	public final BooleanOption minimapOutline = new BooleanOption("minimap_outline", true);
-	public final IntegerOption arrowScale = new IntegerOption("arrow_scale", 2, 1, 4);
-	private final BooleanOption lockMapToNorth = new BooleanOption("lock_map_north", true);
-	public final BooleanOption enabled = new BooleanOption("enabled", true);
-	private final IntegerOption mapScale = new IntegerOption("map_scale", 1, 1, 5);
-	private final BooleanOption showWaypoints = new BooleanOption("show_waypoints", true);
-	public final BooleanOption useTextureSampling = new BooleanOption("use_texture_sampling", false);
-	private final BooleanOption showCardinalDirections = new BooleanOption("show_cardinal_directions", true);
-	private final OptionCategory minimap = OptionCategory.create("minimap");
-	final int radius = 64, size = radius * 2;
 	private static final ResourceLocation texLocation = AxolotlClientWaypoints.rl("minimap");
 	public static final ResourceLocation arrowLocation = AxolotlClientWaypoints.rl("arrow");
 	private final NativeImage pixels = new NativeImage(size, size, false);
 	public long updateDuration = -1;
 	private DynamicTexture tex;
-	@Getter
-	@Setter
-	private int x, y;
 	private int mapCenterX, mapCenterZ;
 	private boolean usingHud;
 	public boolean allowCaves = true;
@@ -93,29 +68,22 @@ public class Minimap {
 	private final Minecraft minecraft = Minecraft.getInstance();
 
 	public void init() {
-		minimap.add(enabled, useTextureSampling, lockMapToNorth, arrowScale, minimapOutline, outlineColor, mapScale, showWaypoints, showCardinalDirections);
+		minimap.add(enabled, lockMapToNorth, arrowScale, minimapOutline, outlineColor, enableBiomeBlending, mapScale, showWaypoints, showCardinalDirections);
 		AxolotlClientWaypoints.category.add(minimap);
 		if (AxolotlClientWaypointsCommon.AXOLOTLCLIENT_PRESENT) {
 			usingHud = true;
 			var hud = new MinimapHudEntry(this);
 			hud.setEnabled(true);
-			var hudConfigManager = new JsonConfigManager(AxolotlClientWaypointsCommon.OPTIONS_PATH.resolveSibling(hud.getId().getPath() + ".json"), hud.getAllOptions());
+			var hudConfigManager = new JsonConfigManager(AxolotlClientWaypointsCommon.OPTIONS_PATH.resolveSibling(hud.getId().br$getPath() + ".json"), hud.getAllOptions());
 			hudConfigManager.suppressName("x");
 			hudConfigManager.suppressName("y");
 			hudConfigManager.suppressName(minimapOutline.getName());
 			hudConfigManager.suppressName(outlineColor.getName());
 			AxolotlClientConfig.getInstance().register(hudConfigManager);
 			hudConfigManager.load();
-			Runtime.getRuntime().addShutdownHook(new Thread(hudConfigManager::save));
+			ClientLifecycleEvents.CLIENT_STOPPING.register(mc -> hudConfigManager.save());
 			minimap.add(hud.getAllOptions(), false);
-			try {
-				var f = HudManager.class.getDeclaredField("entries");
-				f.setAccessible(true);
-				@SuppressWarnings("unchecked") var entries = (Map<ResourceLocation, HudEntry>) f.get(HudManager.getInstance());
-				entries.put(hud.getId(), hud);
-			} catch (Exception ignored) {
-				usingHud = false;
-			}
+			HudManager.getInstance().addNonConfigured(hud);
 		}
 	}
 
@@ -146,10 +114,11 @@ public class Minimap {
 		renderMap(guiGraphics);
 	}
 
-	public void renderMap(GuiGraphics guiGraphics) {
+	public void renderMap(AxoRenderContext ctx) {
 		if (!isEnabled()) {
 			return;
 		}
+		var guiGraphics = (GuiGraphics) ctx;
 		guiGraphics.pose().pushMatrix();
 		{
 			guiGraphics.enableScissor(x, y, x + size, y + size);
@@ -302,8 +271,7 @@ public class Minimap {
 			}
 		}
 
-		AtomicBoolean updated = new AtomicBoolean(false);
-		List<CompletableFuture<?>> futs = new ArrayList<>();
+		boolean updated = false;
 		for (int x = 0; x < size; x++) {
 			double d = 0.0;
 			for (int z = -1; z < size; z++) {
@@ -346,18 +314,19 @@ public class Minimap {
 					e += y;
 					var mapColor = blockState.getMapColor(level, mutableBlockPos);
 
-					MapColor.Brightness brightness;
+					int color;
 					if (mapColor == MapColor.WATER) {
-						double f = fluidDepth * 0.1 + (x + z & 1) * 0.2;
-						if (f < 0.5) {
-							brightness = MapColor.Brightness.HIGH;
-						} else if (f > 0.9) {
-							brightness = MapColor.Brightness.LOW;
-						} else {
-							brightness = MapColor.Brightness.NORMAL;
-						}
+						var floorBlock = levelChunk.getBlockState(mutableBlockPos2);
+						var floorColor = floorBlock.getMapColor(level, mutableBlockPos2).col;
+						int biomeColor = enableBiomeBlending.get() ? BiomeColors.getAverageWaterColor(level, mutableBlockPos) : mapColor.col;
+						float shade = level.getShade(Direction.UP, true);
+						int waterColor = biomeColor;
+						waterColor = ARGB.colorFromFloat(1f, ARGB.redFloat(waterColor) * shade, ARGB.greenFloat(waterColor) * shade, ARGB.blueFloat(waterColor) * shade);
+						waterColor = ARGB.average(waterColor, ARGB.scaleRGB(floorColor, 1f - fluidDepth / 15f));
+						color = waterColor;
 					} else {
 						double f = (e - d) * 4.0 / (1 + 4) + ((x + z & 1) - 0.5) * 0.4;
+						MapColor.Brightness brightness;
 						if (f > 0.6) {
 							brightness = MapColor.Brightness.HIGH;
 						} else if (f < -0.6) {
@@ -365,39 +334,27 @@ public class Minimap {
 						} else {
 							brightness = MapColor.Brightness.NORMAL;
 						}
+						color = mapColor.calculateARGBColor(brightness);
 					}
 
 					d = e;
 
-					if (useTextureSampling.get()) {
-						final int fz = z, fx = x;
-						futs.add(TextureSampler.getSample(blockState, level, mutableBlockPos, brightness).thenAccept(color -> {
-							color = ARGB.opaque(color);
-							if (fz >= 0 && pixels.getPixel(fx, fz) != color) {
-								pixels.setPixel(fx, fz, color);
-								updated.set(true);
-							}
-						}));
-					} else {
-						int color = mapColor.calculateARGBColor(brightness);
-						if (z >= 0 && pixels.getPixel(x, z) != color) {
-							pixels.setPixel(x, z, ARGB.opaque(color));
-							updated.set(true);
-						}
+					if (z >= 0 && pixels.getPixel(x, z) != color) {
+						pixels.setPixel(x, z, ARGB.opaque(color));
+						updated = true;
 					}
 				} else {
 					if (z >= 0 && pixels.getPixel(x, z) != 0) {
 						pixels.setPixel(x, z, ARGB.opaque(0));
-						updated.set(true);
+						updated = true;
 					}
 				}
 			}
 		}
-		CompletableFuture.allOf(futs.toArray(CompletableFuture[]::new)).thenRun(() -> {
-			if (updated.get()) {
-				tex.upload();
-			}
-		});
+
+		if (updated) {
+			tex.upload();
+		}
 		updateDuration = Util.getNanos() - start;
 	}
 }

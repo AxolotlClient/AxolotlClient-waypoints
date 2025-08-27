@@ -114,7 +114,7 @@ public class AxolotlClientWaypoints implements ClientModInitializer {
 	}
 
 	public static Identifier rl(String path) {
-		return new Identifier(AxolotlClientWaypointsCommon.MODID, path);
+		return (Identifier) AxolotlClientWaypointsCommon.rl(path);
 	}
 
 	public static String tr(String key, Object... args) {

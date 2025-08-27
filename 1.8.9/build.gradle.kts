@@ -38,8 +38,8 @@ dependencies {
 	include("io.github.axolotlclient:AxolotlClient-config:${project.property("config")}+$minecraftVersion")
 	modImplementation("io.github.axolotlclient.AxolotlClient-config:AxolotlClientConfig-common:${project.property("config")}")
 
-	modImplementation("io.github.axolotlclient:AxolotlClient:3.1.4+$minecraftVersion")
-	compileOnly("io.github.axolotlclient.AxolotlClient:AxolotlClient-common:3.1.4")
+	modImplementation("io.github.axolotlclient:AxolotlClient:${project.property("axolotlclient")}+$minecraftVersion")
+	compileOnly("io.github.axolotlclient.AxolotlClient:AxolotlClient-common:${project.property("axolotlclient")}")
 
 	ploceus.dependOsl(osl)
 

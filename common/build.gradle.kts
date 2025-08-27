@@ -16,6 +16,7 @@ dependencies {
 	})
 	testRuntimeOnly(testCompileOnly(compileOnly("io.github.axolotlclient.AxolotlClient-config:AxolotlClientConfig-common:${project.property("config")}")!!)!!)
 
+	compileOnly("io.github.axolotlclient.AxolotlClient:AxolotlClient-common:${project.property("axolotlclient")}")
 	testImplementation(compileOnly("com.google.code.gson:gson:2.10")!!)
 
 	compileOnly("org.joml:joml:1.10.8")

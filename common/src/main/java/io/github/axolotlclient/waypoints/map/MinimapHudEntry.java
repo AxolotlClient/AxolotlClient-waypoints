@@ -25,56 +25,57 @@ package io.github.axolotlclient.waypoints.map;
 import java.util.List;
 
 import io.github.axolotlclient.AxolotlClientConfig.api.options.Option;
+import io.github.axolotlclient.bridge.render.AxoRenderContext;
+import io.github.axolotlclient.bridge.util.AxoIdentifier;
 import io.github.axolotlclient.modules.hud.gui.entry.BoxHudEntry;
-import io.github.axolotlclient.waypoints.AxolotlClientWaypoints;
-import net.minecraft.resource.Identifier;
+import io.github.axolotlclient.waypoints.AxolotlClientWaypointsCommon;
 
 public class MinimapHudEntry extends BoxHudEntry {
 
-	public static final Identifier ID = AxolotlClientWaypoints.rl("minimap_hud");
+	public static final AxoIdentifier ID = AxolotlClientWaypointsCommon.rl("minimap_hud");
 
-	private final Minimap minimap;
+	private final MinimapCommon minimap;
 
-	public MinimapHudEntry(Minimap minimap) {
-		super(AxolotlClientWaypoints.MINIMAP.size+2, AxolotlClientWaypoints.MINIMAP.size+2, true);
+	public MinimapHudEntry(MinimapCommon minimap) {
+		super(minimap.size + 2, minimap.size + 2, true);
 		this.minimap = minimap;
 		outline = minimap.minimapOutline;
 		outlineColor = minimap.outlineColor;
 	}
 
 	@Override
-	public void renderComponent(float v) {
-		int x = getX()+1;
+	public void renderComponent(AxoRenderContext guiGraphics, float v) {
+		int x = getX() + 1;
 		if (minimap.getX() != x) {
 			minimap.setX(x);
 		}
-		int y = getY()+1;
+		int y = getY() + 1;
 		if (minimap.getY() != y) {
 			minimap.setY(y);
 		}
-		minimap.renderMap();
+		minimap.renderMap(guiGraphics);
 	}
 
 	@Override
-	public void renderPlaceholderComponent(float v) {
+	public void renderPlaceholderComponent(AxoRenderContext guiGraphics, float v) {
 
 	}
 
 	@Override
-	public Identifier getId() {
+	public AxoIdentifier getId() {
 		return ID;
 	}
 
 	@Override
 	public void setX(int x) {
 		super.setX(x);
-		minimap.setX((int) (x/getScale())+1);
+		minimap.setX((int) (x / getScale()) + 1);
 	}
 
 	@Override
 	public void setY(int y) {
 		super.setY(y);
-		minimap.setY((int) (y/getScale())+1);
+		minimap.setY((int) (y / getScale()) + 1);
 	}
 
 	@Override
