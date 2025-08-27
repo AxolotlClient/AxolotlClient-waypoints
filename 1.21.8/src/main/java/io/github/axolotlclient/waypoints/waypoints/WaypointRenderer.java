@@ -205,6 +205,9 @@ public class WaypointRenderer {
 			pose.pushMatrix();
 			pose.translate(0, Math.max(height, projHeight + 4) / 2f + 4);
 			var pos = pose.transformPosition(new Vector2f());
+			if (_3dOnScreen) {
+				pos.y = Math.min(pos.y, displayEnd.y()+6);
+			}
 			positionDrawn.set(() -> {
 				var line1 = waypoint.name();
 				pose.pushMatrix();

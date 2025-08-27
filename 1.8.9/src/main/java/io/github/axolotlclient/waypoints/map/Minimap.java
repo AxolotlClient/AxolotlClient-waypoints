@@ -75,7 +75,7 @@ public class Minimap extends MinimapCommon {
 	}
 
 	public void setup() {
-		minecraft.getTextureManager().register(texLocation, tex = new DynamicTexture(size, size));
+		minecraft.getTextureManager().register(texLocation, tex = new DynamicTexture(viewDistance, viewDistance));
 		pixels = tex.getPixels();
 		this.x = new Window(minecraft).getWidth() - size - 10;
 		this.y = 10;
@@ -121,13 +121,13 @@ public class Minimap extends MinimapCommon {
 			}
 			GlStateManager.scalef((float) Math.sqrt(2), (float) Math.sqrt(2), 1);
 			GlStateManager.scalef(mapScale.get(), mapScale.get(), 1);
-			GlStateManager.translatef(-size / 2f, -size / 2f, 0);
+			GlStateManager.translatef(-radius, -radius, 0);
 			float offX, offZ;
 			offX = -(float) (minecraft.player.x - mapCenterX);
 			offZ = -(float) (minecraft.player.z - mapCenterZ);
-			GlStateManager.translatef(offX / mapScale.get(), offZ / mapScale.get(), 0);
+			GlStateManager.translatef(offX, offZ, 0);
 			minecraft.getTextureManager().bind(texLocation);
-			GuiElement.drawTexture(0, 0, 0, 0, size, size, size, size);
+			GuiElement.drawTexture(0, 0, 0, 0, viewDistance, viewDistance, size, size);
 			GlStateManager.popMatrix();
 			DrawUtil.popScissor();
 		}

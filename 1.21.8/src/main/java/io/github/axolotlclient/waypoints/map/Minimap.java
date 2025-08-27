@@ -56,7 +56,7 @@ public class Minimap extends MinimapCommon {
 
 	private static final ResourceLocation texLocation = AxolotlClientWaypoints.rl("minimap");
 	public static final ResourceLocation arrowLocation = AxolotlClientWaypoints.rl("arrow");
-	private final NativeImage pixels = new NativeImage(size, size, false);
+	private final NativeImage pixels = new NativeImage(viewDistance, viewDistance, false);
 	public long updateDuration = -1;
 	private DynamicTexture tex;
 	private int mapCenterX, mapCenterZ;
@@ -121,12 +121,12 @@ public class Minimap extends MinimapCommon {
 			}
 			guiGraphics.pose().scale((float) Math.sqrt(2), (float) Math.sqrt(2));
 			guiGraphics.pose().scale(mapScale.get(), mapScale.get());
-			guiGraphics.pose().translate(-pixels.getWidth() / 2f, -pixels.getHeight() / 2f);
+			guiGraphics.pose().translate(-radius, -radius);
 			float offX, offZ;
 			offX = -(float) (minecraft.player.getX() - mapCenterX);
 			offZ = -(float) (minecraft.player.getZ() - mapCenterZ);
-			guiGraphics.pose().translate(offX / mapScale.get(), offZ / mapScale.get());
-			guiGraphics.blit(RenderPipelines.GUI_TEXTURED, texLocation, 0, 0, 0, 0, pixels.getWidth(), pixels.getHeight(), pixels.getWidth(), pixels.getHeight());
+			guiGraphics.pose().translate(offX, offZ);
+			guiGraphics.blit(RenderPipelines.GUI_TEXTURED, texLocation, 0, 0, 0, 0, pixels.getWidth(), pixels.getHeight(), size, size);
 			guiGraphics.pose().popMatrix();
 			guiGraphics.disableScissor();
 		}

@@ -50,5 +50,6 @@
 	"axolotlclient_waypoints.current_config": "Current config: %s",
 	"axolotlclient_waypoints.current_config_unavailable": "Config unavailable, no options are configured.",
 	"axolotlclient_waypoints.reload_complete": "Reloaded config.",
-	"axolotlclient_waypoints.option_disabled": "This option cannot be changed as it is controlled by the server."
+	"axolotlclient_waypoints.option_disabled": "This option cannot be changed as it is controlled by the server.",
+	"biome_blending": "Biome Blending"
 }

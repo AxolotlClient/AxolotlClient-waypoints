@@ -3,6 +3,8 @@
 ### 0.0.1-beta.8
 
 - Fix Minimap Hud scaling
+- Fix a few other bugs
+- Add missing translation key
 
 ### 0.0.1-beta.7
 

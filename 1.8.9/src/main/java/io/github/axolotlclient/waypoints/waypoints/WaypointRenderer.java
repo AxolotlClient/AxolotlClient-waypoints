@@ -209,6 +209,11 @@ public class WaypointRenderer {
 				GlStateManager.pushMatrix();
 				GlStateManager.translatef(result.x(), result.y(), 0);
 				GlStateManager.translatef(0, Math.max(height, projHeight + 4) / 2f + 4, 0);
+				if (_3dOnScreen) {
+					float y = result.y()+Math.max(height, projHeight + 4) / 2f + 4;
+					var y2 = Math.min(y, displayEnd.y()+6);
+					GlStateManager.translatef(0, y2-y, 0);
+				}
 				int line1W = minecraft.textRenderer.getWidth(line1);
 				GuiElement.fill(-line1W / 2 - 2, -2, line1W / 2 + 2, minecraft.textRenderer.fontHeight + 2, Colors.GRAY.withAlpha(100).toInt());
 				DrawUtil.outlineRect(-line1W / 2 - 2, -2, line1W + 4, minecraft.textRenderer.fontHeight + 4, Colors.GRAY.toInt());

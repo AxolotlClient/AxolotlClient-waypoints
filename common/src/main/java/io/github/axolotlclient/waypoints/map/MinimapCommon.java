@@ -32,7 +32,9 @@ import lombok.Getter;
 import lombok.Setter;
 
 public abstract class MinimapCommon {
-	public final int radius = 64, size = radius * 2;
+	public final int radius = 64,
+		size = radius * 2;
+	public final int viewDistance = 128;
 	@Getter
 	@Setter
 	protected int x,y;
