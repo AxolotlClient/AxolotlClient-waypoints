@@ -49,7 +49,7 @@ subprojects {
 	apply(plugin = "java")
 	apply(plugin = "maven-publish")
 	apply(plugin = "io.freefair.lombok")
-	apply(plugin = "com.modrinth.minotaur")
+	if (project.name != "common") apply(plugin = "com.modrinth.minotaur")
 	apply(plugin = "dev.yumi.gradle.licenser")
 
 	extensions.getByType(JavaPluginExtension::class).withSourcesJar()

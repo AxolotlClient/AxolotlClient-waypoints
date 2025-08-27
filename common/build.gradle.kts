@@ -83,7 +83,3 @@ publishing {
 		}
 	}
 }
-
-afterEvaluate {
-	tasks.modrinth.configure {enabled = false}
-}
