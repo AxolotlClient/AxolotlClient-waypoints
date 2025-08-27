@@ -140,12 +140,15 @@ public class Minimap extends MinimapCommon {
 		if (showCardinalDirections.get()) {
 			Vector2f pos = new Vector2f();
 			guiGraphics.pose().pushMatrix();
+
+			int size = this.size;
 			var directions = new String[]{"N", "W", "E", "S"};
 			for (int i : new int[]{-2, 1, 2, -1}) {
 				var label = directions[i < 0 ? i + 2 : i + 1];
 				var labelWidth = minecraft.font.width(label);
 				var labelHeight = minecraft.font.lineHeight;
 				guiGraphics.pose().pushMatrix();
+				guiGraphics.pose().identity();
 				guiGraphics.pose().translate(x + radius, y + radius);
 				if (!lockMapToNorth.get()) {
 					guiGraphics.pose().rotate((float) -(((minecraft.player.getVisualRotationYInDegrees() + 180) / 180) * Math.PI));
@@ -192,6 +195,7 @@ public class Minimap extends MinimapCommon {
 			{
 				pos.zero();
 				graphics.pose().pushMatrix();
+				graphics.pose().identity();
 				graphics.pose().translate(x, y);
 				graphics.pose().translate(radius, radius);
 				graphics.pose().scale((float) Math.sqrt(2), (float) Math.sqrt(2));

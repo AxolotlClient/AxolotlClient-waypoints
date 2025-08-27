@@ -147,6 +147,7 @@ public class Minimap extends MinimapCommon {
 				var labelWidth = minecraft.textRenderer.getWidth(label);
 				var labelHeight = minecraft.textRenderer.fontHeight;
 				matrixStack.pushMatrix();
+				matrixStack.identity();
 				matrixStack.translate(x + radius, y + radius, 0);
 				if (!lockMapToNorth.get()) {
 					matrixStack.rotate((float) -(((minecraft.player.getHeadYaw() + 180) / 180) * Math.PI), 0, 0, 1);
@@ -197,6 +198,7 @@ public class Minimap extends MinimapCommon {
 			{
 				pos.zero();
 				matrixStack.pushMatrix();
+				matrixStack.identity();
 				matrixStack.translate(x, y, 0);
 				matrixStack.translate(radius, radius, 0);
 				matrixStack.scale((float) Math.sqrt(2), (float) Math.sqrt(2), 1);

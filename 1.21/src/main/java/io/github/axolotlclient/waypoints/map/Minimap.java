@@ -147,6 +147,7 @@ public class Minimap extends MinimapCommon {
 				var labelWidth = minecraft.font.width(label);
 				var labelHeight = minecraft.font.lineHeight;
 				guiGraphics.pose().pushPose();
+				guiGraphics.pose().setIdentity();
 				guiGraphics.pose().translate(x + radius, y + radius, 0);
 				if (!lockMapToNorth.get()) {
 					guiGraphics.pose().last().pose().rotate((float) -(((minecraft.player.getVisualRotationYInDegrees() + 180) / 180) * Math.PI), 0, 0, 1);
@@ -193,6 +194,7 @@ public class Minimap extends MinimapCommon {
 			{
 				pos.zero();
 				graphics.pose().pushPose();
+				graphics.pose().setIdentity();
 				graphics.pose().translate(x, y, 0);
 				graphics.pose().translate(radius, radius, 0);
 				graphics.pose().scale((float) Math.sqrt(2), (float) Math.sqrt(2), 1);

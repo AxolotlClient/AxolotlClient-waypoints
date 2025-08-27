@@ -1,5 +1,9 @@
 ## Changelog
 
+### 0.0.1-beta.8
+
+- Fix Minimap Hud scaling
+
 ### 0.0.1-beta.7
 
 - Improve water display
