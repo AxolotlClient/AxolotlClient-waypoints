@@ -101,15 +101,16 @@ public class WaypointRenderer {
 		int width = textWidth + Waypoint.displayXOffset() * 2;
 		int textHeight = minecraft.font.lineHeight;
 		int height = textHeight + Waypoint.displayYOffset() * 2;
-		var displayStart = projectToScreen(cam, fov, width, height, waypoint.x() - (width / 2f * 0.04), waypoint.y() - (height / 2f * 0.04), waypoint.z());
+		var displayStart = projectToScreen(cam, fov, width, height, waypoint.x(), waypoint.y(), waypoint.z(), new Vector2f(-(width / 2f * 0.04f), (height / 2f * 0.04f)));
 		if (displayStart == null) return;
-		var displayEnd = projectToScreen(cam, fov, width, height, waypoint.x() + (width / 2f * 0.04), waypoint.y() + (height / 2f * 0.04), waypoint.z());
+		var displayEnd = projectToScreen(cam, fov, width, height, waypoint.x(), waypoint.y(), waypoint.z(), new Vector2f(width / 2f * 0.04f, -(height / 2f * 0.04f)));
 		if (displayEnd == null) return;
 		float projWidth = Math.abs(displayEnd.x() - displayStart.x());
 		float projHeight = Math.abs(displayEnd.y() - displayStart.y());
-		if (projWidth / width <= 1 && projHeight / height <= 1) {
+		if (projWidth < width && projHeight < height) {
 			return;
 		}
+
 		stack.pushPose();
 		stack.translate(waypoint.x() - camPos.x(), waypoint.y() - camPos.y(), waypoint.z() - camPos.z());
 		stack.mulPose(cam.rotation().invert(new Quaternionf()));
@@ -165,36 +166,52 @@ public class WaypointRenderer {
 		int height = textHeight + Waypoint.displayYOffset() * 2;
 		var camPos = camera.position();
 
-		var displayStart = projectToScreen(camera, fov, width, height, waypoint.x() - (width / 2f * 0.04), waypoint.y() - (height / 2f * 0.04), waypoint.z());
-		if (displayStart == null) return;
-		var displayEnd = projectToScreen(camera, fov, width, height, waypoint.x() + (width / 2f * 0.04), waypoint.y() + (height / 2f * 0.04), waypoint.z());
-		if (displayEnd == null) return;
-		float projWidth = Math.abs(displayEnd.x() - displayStart.x());
-		float projHeight = Math.abs(displayEnd.y() - displayStart.y());
-		Result result = projectToScreen(camera, fov, width, height, waypoint.x(), waypoint.y(), waypoint.z());
+		var displayStart = projectToScreen(camera, fov, width, height, waypoint.x(), waypoint.y(), waypoint.z(), new Vector2f(-(width / 2f * 0.04f), (height / 2f * 0.04f)));
+		var displayEnd = projectToScreen(camera, fov, width, height, waypoint.x(), waypoint.y(), waypoint.z(), new Vector2f((width / 2f * 0.04f), -(height / 2f * 0.04f)));
+		Result result = projectToScreen(camera, fov, width, height, waypoint.x(), waypoint.y(), waypoint.z(), null);
 		if (result == null) return;
+		float projWidth;
+		float projHeight;
+		if (displayStart != null && displayEnd != null) {
+			projWidth = Math.abs(displayEnd.x() - displayStart.x());
+			projHeight = Math.abs(displayEnd.y() - displayStart.y());
+		} else {
+			projWidth = 0;
+			projHeight = 0;
+		}
 
 		pose.translate(result.x(), result.y());
-
-		if (!AxolotlClientWaypoints.renderOutOfViewWaypointsOnScreenEdge.get() && (result.x() < -width / 2f || result.x() > graphics.guiWidth() + width / 2f || result.y() < -height / 2f || result.y() > graphics.guiHeight() + height / 2f)) {
+		boolean outOfView = result.x() < -width / 2f || result.x() > graphics.guiWidth() + width / 2f || result.y() < -height / 2f || result.y() > graphics.guiHeight() + height / 2f;
+		if (!AxolotlClientWaypoints.renderOutOfViewWaypointsOnScreenEdge.get() && outOfView) {
 			return;
 		}
 
-		if (projWidth / width > 1 || projHeight / height > 1) {
-			return;
+		boolean _3dOnScreen;
+		if (displayEnd != null && displayStart != null) {
+			float minX = displayStart.x();
+			float minY = displayStart.y();
+			float maxX = displayEnd.x();
+			float maxY = displayEnd.y();
+			int guiWidth = graphics.guiWidth();
+			int guiHeight = graphics.guiHeight();
+			_3dOnScreen = minX > 0 && minY > 0 && minX < guiWidth && minY < guiHeight ||
+				minX > 0 && maxY > 0 && minX < guiWidth && maxY < guiHeight ||
+				maxX > 0 && maxY > 0 && maxX < guiWidth && maxY < guiHeight ||
+				maxX > 0 && minY > 0 && maxX < guiWidth && minY < guiHeight;
+		} else {
+			_3dOnScreen = false;
 		}
-
-		if (positionDrawn.get() == null && Math.abs(result.x() - graphics.guiWidth() / 2f) < width / 2f && Math.abs(result.y() - graphics.guiHeight() / 2f) < height / 2f) {
+		if (positionDrawn.get() == null && Math.abs(result.x() - graphics.guiWidth() / 2f) < (_3dOnScreen ? Math.max(projWidth, width) : width) / 2f && Math.abs(result.y() - graphics.guiHeight() / 2f) < (_3dOnScreen ? Math.max(height, projHeight) : height) / 2f) {
 			pose.pushMatrix();
-			pose.translate(0, height / 2f + 2);
+			pose.translate(0, Math.max(height, projHeight + 4) / 2f + 4);
 			var pos = pose.transformPosition(new Vector2f());
 			positionDrawn.set(() -> {
 				var line1 = waypoint.name();
 				pose.pushMatrix();
 				pose.translate(pos);
 				int line1W = minecraft.font.width(line1);
-				graphics.fill(-line1W/2 -2, -2, line1W/2+2, minecraft.font.lineHeight+2, Colors.GRAY.withAlpha(100).toInt());
-				graphics.renderOutline(-line1W/2 -2, -2, line1W+4, minecraft.font.lineHeight+4, Colors.GRAY.toInt());
+				graphics.fill(-line1W / 2 - 2, -2, line1W / 2 + 2, minecraft.font.lineHeight + 2, Colors.GRAY.withAlpha(100).toInt());
+				graphics.renderOutline(-line1W / 2 - 2, -2, line1W + 4, minecraft.font.lineHeight + 4, Colors.GRAY.toInt());
 				graphics.drawString(minecraft.font, line1, -line1W / 2, 0, -1, true);
 				if (!waypoint.closerToThan(camPos.x(), camPos.y(), camPos.z(), CUTOFF_DIST)) {
 					pose.translate(0, minecraft.font.lineHeight + 4);
@@ -206,20 +223,31 @@ public class WaypointRenderer {
 			pose.popMatrix();
 		}
 
+		if ((projWidth >= width || projHeight >= height) && _3dOnScreen) {
+			return;
+		}
 
 		graphics.fill(-width / 2, -height / 2, width / 2, height / 2, waypoint.color().toInt());
 		graphics.drawString(minecraft.font, waypoint.display(), -textWidth / 2, -textHeight / 2, -1, false);
 	}
 
-	private @Nullable Result projectToScreen(Camera camera, float fov, float xScreenMargin, float yScreenMargin, double x, double y, double z) {
+	private @Nullable Result projectToScreen(Camera camera, float fov, float xScreenMargin, float yScreenMargin, double x, double y, double z, Vector2f orthoOffset) {
 		viewProj.set(x, y, z, 1);
+		if (orthoOffset != null) {
+			var vec = new Matrix4f();
+			vec.rotate(camera.rotation().invert(new Quaternionf()));
+			vec.translate(orthoOffset.x(), orthoOffset.y(), 0);
+			vec.rotate(camera.rotation());
+			vec.transform(viewProj);
+		}
+
 		view.rotation(camera.rotation()).translate(camera.position().toVector3f().negate());
 
 		Matrix4f projection = minecraft.gameRenderer.getProjectionMatrix(fov);
 		projection.mul(view);
 		viewProj.mul(projection);
 
-		if (AxolotlClientWaypoints.renderOutOfViewWaypointsOnScreenEdge.get()) {
+		if (orthoOffset == null && AxolotlClientWaypoints.renderOutOfViewWaypointsOnScreenEdge.get()) {
 			viewProj.w = Math.max(Math.abs(viewProj.x()), Math.max(Math.abs(viewProj.y()), viewProj.w()));
 		}
 

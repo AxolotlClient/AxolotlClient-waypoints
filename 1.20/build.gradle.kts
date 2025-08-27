@@ -1,3 +1,5 @@
+@file:Suppress("UnstableApiUsage")
+
 plugins {
 	id("fabric-loom")
 	id("io.github.p03w.machete")
