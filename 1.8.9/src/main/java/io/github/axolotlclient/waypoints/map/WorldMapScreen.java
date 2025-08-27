@@ -28,7 +28,6 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ForkJoinPool;
 import java.util.function.Supplier;
 
 import com.google.common.collect.Lists;
@@ -56,6 +55,7 @@ import net.minecraft.block.state.BlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.render.TextRenderer;
 import net.minecraft.client.render.texture.DynamicTexture;
+import net.minecraft.client.world.color.BiomeColors;
 import net.minecraft.resource.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
@@ -115,6 +115,29 @@ public class WorldMapScreen extends Screen {
 			tile.render(matrixStack, (float) player.x, (float) player.z, scale, partialTick, caveY, atSurface, width, height);
 		}
 
+		int x = getWorldX(mouseX);
+		int z = getWorldZ(mouseY);
+		{
+			matrixStack.pushMatrix();
+			GlStateManager.pushMatrix();
+			GlStateManager.translatef((float) -player.x, (float) -player.z, 0);
+			matrixStack.translate((float) -player.x, (float) -player.z, 0);
+			int tileX = x / TILE_SIZE;
+			int tileY = z / TILE_SIZE;
+			if (x < 0 && x % TILE_SIZE != 0) {
+				tileX -= 1;
+			}
+			if (z < 0 && z % TILE_SIZE != 0) {
+				tileY -= 1;
+			}
+			matrixStack.translate(tileX * TILE_SIZE, tileY * TILE_SIZE, 0);
+			GlStateManager.translatef(tileX * TILE_SIZE, tileY * TILE_SIZE, 0);
+			fill(0, 0, TILE_SIZE, TILE_SIZE, 0x33FFFFFF);
+			DrawUtil.outlineRect(0, 0, TILE_SIZE, TILE_SIZE, 0x33FFFFFF);
+			matrixStack.popMatrix();
+			GlStateManager.popMatrix();
+		}
+
 		matrixStack.popMatrix();
 		GlStateManager.popMatrix();
 		renderMapWaypoints(mouseX, mouseY);
@@ -129,11 +152,7 @@ public class WorldMapScreen extends Screen {
 		GlStateManager.popMatrix();
 		super.render(mouseX, mouseY, partialTick);
 
-		if (mouseX > -1 && mouseY > -1) {
-			int x = getWorldX(mouseX);
-			int z = getWorldZ(mouseY);
-			drawCenteredString(font, AxolotlClientWaypoints.tr("position", String.valueOf(x), String.valueOf(getY(x, z)), String.valueOf(z)), width / 2, height - 15, Colors.GRAY.toInt());
-		}
+		drawCenteredString(font, AxolotlClientWaypoints.tr("position", String.valueOf(x), String.valueOf(getY(x, z)), String.valueOf(z)), width / 2, height - 15, Colors.GRAY.toInt());
 	}
 
 	private static int blockToSectionCoord(int c) {
@@ -143,7 +162,13 @@ public class WorldMapScreen extends Screen {
 	private int getY(int x, int z) {
 		int tileX = x / TILE_SIZE;
 		int tileY = z / TILE_SIZE;
-		var tile = tiles.get(new Vector2i(tileX - 1, tileY - 1));
+		if (x < 0 && x % TILE_SIZE != 0) {
+			tileX -= 1;
+		}
+		if (z < 0 && z % TILE_SIZE != 0) {
+			tileY -= 1;
+		}
+		var tile = tiles.get(new Vector2i(tileX, tileY));
 		WorldChunk c;
 		if (tile == null || tile.tile == null) {
 			c = ((LevelAccessor) minecraft.world).invokeChunkLoadedAt(blockToSectionCoord(x), blockToSectionCoord(z), true) ? minecraft.world.getChunkAt(blockToSectionCoord(x), blockToSectionCoord(z)) : null;
@@ -252,13 +277,11 @@ public class WorldMapScreen extends Screen {
 			Map<Vector2i, LazyTile> loadedTiles = new HashMap<>(tiles);
 			tiles.clear();
 			tiles.put(new Vector2i(playerTile.tilePosX(), playerTile.tilePosY()), playerTile);
-			minecraft.submit(() -> {
-				triggerNeighbourLoad(playerTile, atSurface, caveY, playerTile);
-				loadedTiles.forEach((v, t) -> {
-					if (!tiles.containsKey(v)) {
-						tiles.put(v, t);
-					}
-				});
+			triggerNeighbourLoad(playerTile, atSurface, caveY, playerTile);
+			loadedTiles.forEach((v, t) -> {
+				if (!tiles.containsKey(v)) {
+					tiles.put(v, t);
+				}
 			});
 		}
 	}
@@ -311,32 +334,46 @@ public class WorldMapScreen extends Screen {
 		var level = minecraft.world;
 		int tileX = anchorX / TILE_SIZE;
 		int tileY = anchorZ / TILE_SIZE;
+		if (anchorX < 0 && anchorX % TILE_SIZE != 0) {
+			tileX -= 1;
+		}
+		if (anchorZ < 0 && anchorZ % TILE_SIZE != 0) {
+			tileY -= 1;
+		}
 		WorldChunk tileChunk = ((LevelAccessor) level).invokeChunkLoadedAt(tileX, tileY, false) ? level.getChunkAt(tileX, tileY) : null;
 		if (tileChunk != null) {
-			return new LazyTile(tileX, tileY, () -> {
-				var t = Tile.create(tileX, tileY, tileChunk);
-				t.update(caveY, atSurface, level);
-				return t;
-			});
+			int finalTileX = tileX;
+			int finalTileY = tileY;
+			return new LazyTile(tileX, tileY, () -> Tile.create(finalTileX, finalTileY, tileChunk));
 		}
 		return null;
 	}
 
 	public static void saveLoadedChunkTile(int chunkX, int chunkZ) {
 		Minecraft minecraft = Minecraft.getInstance();
-		var tile = createTile(minecraft, chunkX << 4, chunkZ << 4, true, 0);
-		if (tile != null) {
-			tile.load(0, true)
-				.thenRun(() -> {
-					var dir = getCurrentLevelMapSaveDir();
-					try {
-						Files.createDirectories(dir);
-
-						saveTile(tile, dir);
-					} catch (IOException e) {
-						log.error("Failed to create world map save dir!", e);
-					}
-				});
+		var anchorX = chunkX << 4;
+		var anchorZ = chunkZ << 4;
+		//anchorZ = anchorZ - anchorZ % TILE_SIZE;
+		//anchorX = anchorX - anchorX % TILE_SIZE;
+		var level = minecraft.world;
+		int tileX = anchorX / TILE_SIZE;
+		int tileY = anchorZ / TILE_SIZE;
+		/*if (anchorX < 0 && anchorX % TILE_SIZE != 0) {
+			tileX -= 1;
+		}
+		if (anchorZ < 0 && anchorZ % TILE_SIZE != 0) {
+			tileY -= 1;
+		}*/
+		var tileChunk = level.getChunkAt(tileX, tileY);
+		if (tileChunk != null) {
+			var dir = getCurrentLevelMapSaveDir();
+			var out = dir.resolve("%d_%d%s".formatted(tileX, tileY, Tile.FILE_EXTENSION));
+			try {
+				Files.createDirectories(dir);
+				new LevelChunkStorage.Entry(tileChunk).write(out);
+			} catch (IOException e) {
+				log.warn("Failed to save tile at {}, {}", tileX, tileY, e);
+			}
 		}
 	}
 
@@ -465,7 +502,7 @@ public class WorldMapScreen extends Screen {
 				if (value == 0) {
 					collectPlayerYData();
 				}
-				CompletableFuture.runAsync(() -> tiles.values().forEach(t -> t.update(caveY, atSurface, minecraft.world)));
+				updateTiles();
 			}
 		});
 		addDrawableChild(new DropdownButton(width - 20, 0, 20, 20,
@@ -478,7 +515,7 @@ public class WorldMapScreen extends Screen {
 				slider.active = allowsCaves;
 				if (!allowsCaves) {
 					atSurface = true;
-					CompletableFuture.runAsync(() -> tiles.values().forEach(t -> t.update(caveY, atSurface, minecraft.world)));
+					updateTiles();
 				} else {
 					slider.applyValue();
 				}
@@ -487,10 +524,10 @@ public class WorldMapScreen extends Screen {
 		AxolotlClientWaypoints.NETWORK_LISTENER.postReceive.add(optionUpdate);
 		optionUpdate.run();
 		if (tiles.isEmpty()) {
-			minecraft.submit(() -> {
-				if (!initializedOnce) {
-					collectPlayerYData();
-				}
+			if (!initializedOnce) {
+				collectPlayerYData();
+			}
+			CompletableFuture.runAsync(() -> {
 				loadSavedTiles();
 				createTiles();
 			});
@@ -498,9 +535,8 @@ public class WorldMapScreen extends Screen {
 		initializedOnce = true;
 	}
 
-	@Override
-	public void tick() {
-
+	private void updateTiles() {
+		CompletableFuture.runAsync(() -> tiles.values().forEach(t -> t.update(caveY, atSurface, minecraft.world)));
 	}
 
 	private void loadSavedTiles() {
@@ -595,7 +631,11 @@ public class WorldMapScreen extends Screen {
 			if (pos.x + TILE_SIZE * scale >= 0 && pos.x < guiWidth && pos.y + TILE_SIZE * scale >= 0 && pos.y < guiHeight) {
 				if (tile == null) {
 					if (!loaded) {
-						load(caveY, atSurface);
+						load().thenRunAsync(() -> {
+							if (tile != null) {
+								tile.update(caveY, atSurface, Minecraft.getInstance().world);
+							}
+						});
 					}
 				} else {
 					// FIXME - floating point precision errors?
@@ -607,13 +647,10 @@ public class WorldMapScreen extends Screen {
 			GlStateManager.popMatrix();
 		}
 
-		public CompletableFuture<?> load(int caveY, boolean atSurface) {
+		public CompletableFuture<?> load() {
 			if (!loaded) {
 				loaded = true;
-				return CompletableFuture.supplyAsync(supplier, Minecraft.getInstance()::submit).thenApplyAsync(t -> {
-					t.update(caveY, atSurface, Minecraft.getInstance().world);
-					return t;
-				}, ForkJoinPool.commonPool()).thenApply(t -> tile = t);
+				return CompletableFuture.supplyAsync(supplier, Minecraft.getInstance()::submit).thenApply(t -> tile = t);
 			}
 			return CompletableFuture.completedFuture(null);
 		}
@@ -726,25 +763,25 @@ public class WorldMapScreen extends Screen {
 								blockState2 = levelChunk.getBlockState(mutableBlockPos2);
 								fluidDepth++;
 							} while (highestFullBlockY > levelMinY && blockState2.getBlock().getMaterial().isLiquid());
-
 						}
 					}
 
 					e += y;
 					var mapColor = blockState.getBlock().getMapColor(blockState);
 
-					int brightness;
+					int color;
 					if (mapColor == MapColor.WATER) {
-						double f = fluidDepth * 0.1 + (x + z & 1) * 0.2;
-						if (f < 0.5) {
-							brightness = 2;
-						} else if (f > 0.9) {
-							brightness = 0;
-						} else {
-							brightness = 1;
-						}
+						var floorBlock = levelChunk.getBlockState(mutableBlockPos2);
+						var floorColor = floorBlock.getBlock().getMapColor(floorBlock).color;
+						int biomeColor = BiomeColors.getWaterColor(level, mutableBlockPos);
+						float shade = 1.0f;
+						int waterColor = biomeColor;
+						waterColor = ARGB.colorFromFloat(1f, ARGB.redFloat(waterColor) * shade, ARGB.greenFloat(waterColor) * shade, ARGB.blueFloat(waterColor) * shade);
+						waterColor = ARGB.average(waterColor, ARGB.scaleRGB(floorColor, 1f - fluidDepth / 15f));
+						color = waterColor;
 					} else {
 						double f = (e - d) * 4.0 / (1 + 4) + ((x + z & 1) - 0.5) * 0.4;
+						int brightness;
 						if (f > 0.6) {
 							brightness = 2;
 						} else if (f < -0.6) {
@@ -752,27 +789,14 @@ public class WorldMapScreen extends Screen {
 						} else {
 							brightness = 1;
 						}
+						color = mapColor.getColor(brightness);
 					}
 
 					d = e;
-					/*if (Minimap.useTextureSampling.get()) {
-						if (z >= 0 && !blockState.isAir()) {
-							final int fz = z, fx = x;
-							TextureSampler.getSample(blockState, level, mutableBlockPos, brightness).thenAccept(color -> {
-								color = ARGB.opaque(color);
-								if (Integer.rotateRight(pixels.getPixelRGBA(fx, fz), 4) != color) {
-									pixels.setPixelRGBA(fx, fz, Integer.rotateLeft(color, 4));
-									tex.upload();
-								}
-							});
-						}
-					} else*/
-					{
-						int color = mapColor.getColor(brightness);
-						if (z >= 0 && pixels[x + z * TILE_SIZE] != color) {
-							pixels[x + z * TILE_SIZE] = ARGB.opaque(color);
-							updated = true;
-						}
+
+					if (z >= 0 && pixels[x + z * TILE_SIZE] != color) {
+						pixels[x + z * TILE_SIZE] = ARGB.opaque(color);
+						updated = true;
 					}
 				}
 			}
