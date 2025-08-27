@@ -1,5 +1,11 @@
 ## Changelog
 
+### 0.0.1-beta.7
+
+- Improve water display
+- Refine waypoint rendering
+- Add option to enable biome blending for the minimap
+
 ### 0.0.1-beta.6
 
 - fix a crash on versions <1.21.7 when opening the config screen
