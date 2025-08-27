@@ -115,7 +115,7 @@ public class AxolotlClientWaypoints implements ClientModInitializer {
 	}
 
 	public static ResourceLocation rl(String path) {
-		return (ResourceLocation) AxolotlClientWaypointsCommon.rl(path);
+		return new ResourceLocation(AxolotlClientWaypointsCommon.MODID, path);
 	}
 
 	public static Component tr(String key, Object... args) {

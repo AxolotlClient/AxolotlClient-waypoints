@@ -23,12 +23,10 @@
 package io.github.axolotlclient.waypoints.map;
 
 import com.mojang.blaze3d.platform.NativeImage;
-import io.github.axolotlclient.AxolotlClientConfig.api.AxolotlClientConfig;
-import io.github.axolotlclient.AxolotlClientConfig.impl.managers.JsonConfigManager;
 import io.github.axolotlclient.bridge.render.AxoRenderContext;
-import io.github.axolotlclient.modules.hud.HudManager;
 import io.github.axolotlclient.waypoints.AxolotlClientWaypoints;
 import io.github.axolotlclient.waypoints.AxolotlClientWaypointsCommon;
+import io.github.axolotlclient.waypoints.HudCreator;
 import io.github.axolotlclient.waypoints.util.ARGB;
 import io.github.axolotlclient.waypoints.waypoints.Waypoint;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
@@ -72,18 +70,8 @@ public class Minimap extends MinimapCommon {
 		AxolotlClientWaypoints.category.add(Minimap.minimap);
 		if (AxolotlClientWaypointsCommon.AXOLOTLCLIENT_PRESENT) {
 			usingHud = true;
-			var hud = new MinimapHudEntry(this);
-			hud.setEnabled(true);
-			var hudConfigManager = new JsonConfigManager(AxolotlClientWaypointsCommon.OPTIONS_PATH.resolveSibling(hud.getId().br$getPath() + ".json"), hud.getAllOptions());
-			hudConfigManager.suppressName("x");
-			hudConfigManager.suppressName("y");
-			hudConfigManager.suppressName(minimapOutline.getName());
-			hudConfigManager.suppressName(outlineColor.getName());
-			AxolotlClientConfig.getInstance().register(hudConfigManager);
-			hudConfigManager.load();
-			ClientLifecycleEvents.CLIENT_STOPPING.register(mc -> hudConfigManager.save());
-			minimap.add(hud.getAllOptions(), false);
-			HudManager.getInstance().addNonConfigured(hud);
+			var save = HudCreator.createHud(this);
+			ClientLifecycleEvents.CLIENT_STOPPING.register(mc -> save.run());
 		}
 	}
 
@@ -116,10 +104,13 @@ public class Minimap extends MinimapCommon {
 	}
 
 	public void renderMap(AxoRenderContext ctx) {
+		renderMap((GuiGraphics) ctx);
+	}
+
+	public void renderMap(GuiGraphics guiGraphics) {
 		if (!isEnabled()) {
 			return;
 		}
-		var guiGraphics = (GuiGraphics) ctx;
 		guiGraphics.pose().pushPose();
 		{
 			guiGraphics.enableScissor(x, y, x + size, y + size);

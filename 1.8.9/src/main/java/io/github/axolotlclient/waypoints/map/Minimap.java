@@ -23,13 +23,11 @@
 package io.github.axolotlclient.waypoints.map;
 
 import com.mojang.blaze3d.platform.GlStateManager;
-import io.github.axolotlclient.AxolotlClientConfig.api.AxolotlClientConfig;
-import io.github.axolotlclient.AxolotlClientConfig.impl.managers.JsonConfigManager;
 import io.github.axolotlclient.AxolotlClientConfig.impl.util.DrawUtil;
 import io.github.axolotlclient.bridge.render.AxoRenderContext;
-import io.github.axolotlclient.modules.hud.HudManager;
 import io.github.axolotlclient.waypoints.AxolotlClientWaypoints;
 import io.github.axolotlclient.waypoints.AxolotlClientWaypointsCommon;
+import io.github.axolotlclient.waypoints.HudCreator;
 import io.github.axolotlclient.waypoints.util.ARGB;
 import io.github.axolotlclient.waypoints.waypoints.Waypoint;
 import net.minecraft.block.Blocks;
@@ -67,18 +65,8 @@ public class Minimap extends MinimapCommon {
 		AxolotlClientWaypoints.category.add(Minimap.minimap);
 		if (AxolotlClientWaypointsCommon.AXOLOTLCLIENT_PRESENT) {
 			usingHud = true;
-			var hud = new MinimapHudEntry(this);
-			hud.setEnabled(true);
-			var hudConfigManager = new JsonConfigManager(AxolotlClientWaypointsCommon.OPTIONS_PATH.resolveSibling(hud.getId().br$getPath() + ".json"), hud.getAllOptions());
-			hudConfigManager.suppressName("x");
-			hudConfigManager.suppressName("y");
-			hudConfigManager.suppressName(minimapOutline.getName());
-			hudConfigManager.suppressName(outlineColor.getName());
-			AxolotlClientConfig.getInstance().register(hudConfigManager);
-			hudConfigManager.load();
-			MinecraftClientEvents.STOP.register(mc -> hudConfigManager.save());
-			minimap.add(hud.getAllOptions(), false);
-			HudManager.getInstance().addNonConfigured(hud);
+			var save = HudCreator.createHud(this);
+			MinecraftClientEvents.STOP.register(mc -> save.run());
 		}
 	}
 
@@ -110,10 +98,14 @@ public class Minimap extends MinimapCommon {
 			}
 			this.y += 20;
 		}*/
-		renderMap(null);
+		renderMap();
 	}
 
 	public void renderMap(AxoRenderContext ctx) {
+		renderMap();
+	}
+
+	public void renderMap() {
 		if (!isEnabled()) {
 			return;
 		}
