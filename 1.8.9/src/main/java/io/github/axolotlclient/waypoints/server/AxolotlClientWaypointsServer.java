@@ -55,30 +55,27 @@ public class AxolotlClientWaypointsServer implements DedicatedServerModInitializ
 			var modifyConfig = Commands.literal("modify_config")
 				.requires(c -> c.hasPermission(PERMISSION_LEVEL));
 
-			for (Field f : Payload.class.getDeclaredFields()) {
-				if (Modifier.isStatic(f.getModifiers())) {
-					continue;
-				}
-				try {
-					var wither = Payload.class.getMethod("with" + Character.toUpperCase(f.getName().charAt(0)) + f.getName().substring(1), boolean.class);
+			for (var m : Payload.class.getMethods()) {
+				if (m.getParameterCount() != 1) continue;
+				if (m.getParameterTypes()[0] != boolean.class) continue;
+				if (Modifier.isStatic(m.getModifiers())) continue;
+				for (Field f : Payload.class.getDeclaredFields()) {
+					if (m.getName().contains(Character.toUpperCase(f.getName().charAt(0)) + f.getName().substring(1))) {
+						modifyConfig.then(Commands.literal(f.getName()).then(Commands.argument(f.getName(), BoolArgumentType.bool()).executes(c -> {
+							if (options == null) {
+								options = new Payload();
+							}
+							try {
+								options = (Payload) m.invoke(options, BoolArgumentType.getBool(c, f.getName()));
+							} catch (IllegalAccessException | InvocationTargetException e) {
+								throw new RuntimeException(e);
+							}
 
-					modifyConfig.then(Commands.literal(f.getName()).then(Commands.argument(f.getName(), BoolArgumentType.bool()).executes(c -> {
-						if (options == null) {
-							options = new Payload();
-						}
-						try {
-							options = (Payload) wither.invoke(options, BoolArgumentType.getBool(c, f.getName()));
-						} catch (IllegalAccessException | InvocationTargetException e) {
-							throw new RuntimeException(e);
-						}
-
-						save();
-						reconfigure(c);
-
-						return 0;
-					})));
-				} catch (NoSuchMethodException e) {
-					throw new RuntimeException(e);
+							save();
+							reconfigure(c);
+							return 0;
+						})));
+					}
 				}
 			}
 			commandDispatcher.register(Commands.literal(AxolotlClientWaypointsCommon.MODID)

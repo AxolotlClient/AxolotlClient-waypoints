@@ -1,5 +1,9 @@
 ## Changelog
 
+### 0.0.1-beta.9
+
+- Improved reflective command building for server part
+
 ### 0.0.1-beta.8
 
 - Fix Minimap Hud scaling

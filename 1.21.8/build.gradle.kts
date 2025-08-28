@@ -129,9 +129,15 @@ modrinth {
 	token = System.getenv("MODRINTH_TOKEN")
 	projectId = "s0qWsRJC"
 	versionNumber = "${project.version}"
-	versionType = "release"
+	versionType = if (project.version.toString().contains("beta")) {
+		"beta"
+	} else if (project.version.toString().contains("alpha")) {
+		"alpha"
+	} else {
+		"release"
+	}
 	uploadFile = tasks.remapJar.get()
-	gameVersions.set(listOf(minecraftVersion))
+	gameVersions.set(listOf("1.21.7", "1.21.8"))
 	loaders.set(listOf("quilt", "fabric"))
 	additionalFiles.set(listOf(tasks.remapSourcesJar))
 	dependencies {

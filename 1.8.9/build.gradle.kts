@@ -142,7 +142,13 @@ modrinth {
 	token = System.getenv("MODRINTH_TOKEN")
 	projectId = "s0qWsRJC"
 	versionNumber = "${project.version}"
-	versionType = "release"
+	versionType = if (project.version.toString().contains("beta")) {
+		"beta"
+	} else if (project.version.toString().contains("alpha")) {
+		"alpha"
+	} else {
+		"release"
+	}
 	uploadFile = tasks.remapJar.get()
 	gameVersions.set(listOf(minecraftVersion))
 	loaders.set(listOf("ornithe"))
