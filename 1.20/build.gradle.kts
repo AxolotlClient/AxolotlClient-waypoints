@@ -86,7 +86,7 @@ java {
 
 tasks.runClient {
 	classpath(sourceSets.getByName("test").runtimeClasspath)
-	jvmArgs("-XX:+AllowEnhancedClassRedefinition")
+	jvmArgs("-XX:+AllowEnhancedClassRedefinition -XX:+IgnoreUnrecognizedVMOptions")
 }
 
 // Configure the maven publication
@@ -132,7 +132,7 @@ modrinth {
 	additionalFiles.set(listOf(tasks.remapSourcesJar))
 	dependencies {
 		required.project("fabric-api")
-		optional.project("axolotlclient")
+		optional.version("axolotlclient", project.property("axolotlclient").toString())
 	}
 
 	// Changelog fetching: Credit LambdAurora.

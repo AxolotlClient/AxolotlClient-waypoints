@@ -186,7 +186,7 @@ public class WaypointRenderer {
 			pose.pushPose();
 			pose.translate(0, Math.max(height, projHeight + 4) / 2f + 4, 0);
 			var pos = pose.last().pose().transformPosition(new Vector3f());
-			if (_3dOnScreen) {
+			if ((projWidth >= width || projHeight >= height) && _3dOnScreen) {
 				pos.y = Math.min(pos.y, displayEnd.y()+6);
 			}
 			positionDrawn.set(() -> {

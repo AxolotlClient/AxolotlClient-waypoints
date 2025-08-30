@@ -33,9 +33,12 @@ jobs:
       - name: Build
         run: ./gradlew build collectBuilds
 
+      - name: Generate Version Changelog
+        run: ./gradlew generateVersionChangelog
+
       - name: Release
         uses: Kira-NT/mc-publish@v3.3
         with:
-          github-token: "${{ secrets.GH_TOKEN }}"
-          changelog-file: "CHANGELOG.md"
+          github-token: "${{ secrets.GITHUB_TOKEN }}"
+          changelog-file: "build/changelog"
           files: builds/*.jar

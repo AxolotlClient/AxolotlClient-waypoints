@@ -1,5 +1,9 @@
 ## Changelog
 
+### 0.0.1-beta.10
+
+- bump AxolotlClient dependency
+
 ### 0.0.1-beta.9
 
 - Improved reflective command building for server part

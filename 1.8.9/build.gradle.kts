@@ -94,7 +94,7 @@ tasks.runClient {
 		jvmArgs("-Dorg.lwjgl.glfw.libname=$glfwPath")
 	}
 	classpath(sourceSets.getByName("test").runtimeClasspath)
-	jvmArgs("-XX:+AllowEnhancedClassRedefinition")
+	jvmArgs("-XX:+AllowEnhancedClassRedefinition -XX:+IgnoreUnrecognizedVMOptions")
 }
 
 tasks.withType(JavaCompile::class).configureEach {
@@ -156,7 +156,7 @@ modrinth {
 	dependencies {
 		required.project("osl")
 		required.project("moehreag-legacy-lwjgl3")
-		optional.project("axolotlclient")
+		optional.version("axolotlclient", project.property("axolotlclient").toString())
 	}
 
 	// Changelog fetching: Credit LambdAurora.

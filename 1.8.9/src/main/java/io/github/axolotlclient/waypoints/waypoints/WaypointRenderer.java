@@ -209,7 +209,7 @@ public class WaypointRenderer {
 				GlStateManager.pushMatrix();
 				GlStateManager.translatef(result.x(), result.y(), 0);
 				GlStateManager.translatef(0, Math.max(height, projHeight + 4) / 2f + 4, 0);
-				if (_3dOnScreen) {
+				if ((projWidth >= width || projHeight >= height) && _3dOnScreen) {
 					float y = result.y()+Math.max(height, projHeight + 4) / 2f + 4;
 					var y2 = Math.min(y, displayEnd.y()+6);
 					GlStateManager.translatef(0, y2-y, 0);

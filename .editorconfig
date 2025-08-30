@@ -12,8 +12,9 @@ max_line_length = 120
 [*.json]
 indent_size = 2
 
-[quilt.mod.json]
-tab_width = 2
-
 [*.properties]
+indent_size = 2
+
+[.github/**/*.yml]
+indent_style = space
 indent_size = 2

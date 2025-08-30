@@ -109,5 +109,33 @@ subprojects {
 	}
 }
 
+tasks.register("generateVersionChangelog") {
+	actions.addLast {
+		val changelogText = project.layout.projectDirectory.file("CHANGELOG.md").asFile.readText()
+		val regexVersion =
+			((project.version) as String).split("+")[0].replace("\\.".toRegex(), "\\.").replace("\\+".toRegex(), "+")
+		val changelogRegex = "###? ${regexVersion}\\n\\n(( *- .+\\n)+)".toRegex()
+		val matcher = changelogRegex.find(changelogText)
+
+		val out = project.layout.buildDirectory.file("changelog").get().asFile.toPath()
+		if (matcher != null) {
+			var changelogContent: String = matcher.groups[1]?.value!!
+			changelogContent += "\n\n**Changelog:**\n"
+
+			val changelogLines = changelogText.split("\n")
+			val linkRefRegex = "^\\[([A-z0-9 _\\-/+.]+)]: ".toRegex()
+			for (line in changelogLines.reversed()) {
+				if ((linkRefRegex.matches(line)))
+					changelogContent += "\n" + line
+				else break
+			}
+
+			out.writeText(changelogContent)
+		} else {
+			out.writeText("")
+		}
+	}
+}
+
 
 
