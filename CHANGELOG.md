@@ -1,5 +1,9 @@
 ## Changelog
 
+### 0.0.1-beta.13
+
+- fix minimap scissoring for 1.20.1 + 1.21.1
+
 ### 0.0.1-beta.12
 
 - correct mixin compat level for 1.8.9 + 1.20.1

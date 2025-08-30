@@ -113,7 +113,9 @@ public class Minimap extends MinimapCommon {
 		}
 		guiGraphics.pose().pushPose();
 		{
-			guiGraphics.enableScissor(x, y, x + size, y + size);
+			var vec1 = guiGraphics.pose().last().pose().transformPosition(x, y, 0, new Vector3f());
+			var vec2 = guiGraphics.pose().last().pose().transformPosition(x+size, y+size, 0, new Vector3f());
+			guiGraphics.enableScissor(Mth.floor(vec1.x), Mth.floor(vec1.y), Mth.floor(vec2.x), Mth.floor(vec2.y));
 			guiGraphics.pose().pushPose();
 			guiGraphics.pose().translate(x, y, 0);
 			guiGraphics.pose().translate(radius, radius, 0);
