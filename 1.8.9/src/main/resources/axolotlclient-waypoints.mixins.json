@@ -1,7 +1,7 @@
 {
 	"required": true,
 	"package": "io.github.axolotlclient.waypoints.mixin",
-	"compatibilityLevel": "JAVA_21",
+	"compatibilityLevel": "JAVA_17",
 	"client": [
 		"AxolotlClientWaypointsCommonMixin",
 		"ClientLevelMixin",

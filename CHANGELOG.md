@@ -1,5 +1,9 @@
 ## Changelog
 
+### 0.0.1-beta.12
+
+- correct mixin compat level for 1.8.9 + 1.20.1
+
 ### 0.0.1-beta.11
 
 - fix 1.8.9 matrix access
