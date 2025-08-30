@@ -1,5 +1,9 @@
 ## Changelog
 
+### 0.0.1-beta.14
+
+- fix water colors for 1.20.1 + 1.21.1
+
 ### 0.0.1-beta.13
 
 - fix minimap scissoring for 1.20.1 + 1.21.1

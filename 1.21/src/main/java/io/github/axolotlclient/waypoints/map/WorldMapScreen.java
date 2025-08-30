@@ -709,7 +709,7 @@ public class WorldMapScreen extends Screen {
 						var floorColor = floorBlock.getMapColor(level, mutableBlockPos2).col;
 						int biomeColor = mapColor.col; //BiomeColors.getAverageWaterColor(level, mutableBlockPos);
 						float shade = level.getShade(Direction.UP, true);
-						int waterColor = biomeColor;
+						int waterColor = ARGB.fromABGR(biomeColor);
 						waterColor = ARGB.colorFromFloat(1f, ARGB.redFloat(waterColor) * shade, ARGB.greenFloat(waterColor) * shade, ARGB.blueFloat(waterColor) * shade);
 						waterColor = ARGB.average(waterColor, ARGB.scaleRGB(floorColor, 1f - fluidDepth / 15f));
 						color = waterColor;

@@ -312,7 +312,7 @@ public class Minimap extends MinimapCommon {
 						var floorColor = floorBlock.getMapColor(level, mutableBlockPos2).col;
 						int biomeColor = enableBiomeBlending.get() ? BiomeColors.getAverageWaterColor(level, mutableBlockPos) : mapColor.col;
 						float shade = level.getShade(Direction.UP, true);
-						int waterColor = biomeColor;
+						int waterColor = ARGB.fromABGR(biomeColor);
 						waterColor = ARGB.colorFromFloat(1f, ARGB.redFloat(waterColor) * shade, ARGB.greenFloat(waterColor) * shade, ARGB.blueFloat(waterColor) * shade);
 						waterColor = ARGB.average(waterColor, ARGB.scaleRGB(floorColor, 1f - fluidDepth / 15f));
 						color = waterColor;
