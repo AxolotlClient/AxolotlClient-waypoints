@@ -23,6 +23,8 @@
 package io.github.axolotlclient.waypoints.waypoints;
 
 import java.lang.Math;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
 import com.mojang.blaze3d.systems.RenderSystem;
@@ -46,6 +48,7 @@ public class WaypointRenderer {
 	private final Minecraft minecraft = Minecraft.getInstance();
 	private final Matrix4f view = new Matrix4f();
 	private final Vector4f viewProj = new Vector4f();
+	private final Set<Waypoint> worldRendererWaypoints = new HashSet<>();
 
 	public void render(PoseStack stack, MultiBufferSource.BufferSource source, float tick) {
 		var profiler = Minecraft.getInstance().getProfiler();
@@ -56,6 +59,7 @@ public class WaypointRenderer {
 		minecraft.gameRenderer.resetProjectionMatrix(minecraft.gameRenderer.getProjectionMatrix(((GameRendererAccessor) minecraft.gameRenderer).invokeGetFov(cam, 0, false)));
 		RenderSystem.enableBlend();
 		float fov = (float) ((GameRendererAccessor) minecraft.gameRenderer).invokeGetFov(cam, tick, true);
+		worldRendererWaypoints.clear();
 
 		for (Waypoint waypoint : AxolotlClientWaypoints.getCurrentWaypoints()) {
 			if (waypoint.closerToThan(camPos.x(), camPos.y(), camPos.z(), CUTOFF_DIST / minecraft.getWindow().getGuiScale())) {
@@ -85,6 +89,7 @@ public class WaypointRenderer {
 		if (projWidth < width && projHeight < height) {
 			return;
 		}
+		worldRendererWaypoints.add(waypoint);
 
 		stack.pushPose();
 		stack.translate(waypoint.x() - camPos.x(), waypoint.y() - camPos.y(), waypoint.z() - camPos.z());
@@ -201,7 +206,7 @@ public class WaypointRenderer {
 			pose.popPose();
 		}
 
-		if ((projWidth >= width || projHeight >= height) && _3dOnScreen) {
+		if ((projWidth >= width || projHeight >= height) && _3dOnScreen && worldRendererWaypoints.contains(waypoint)) {
 			return;
 		}
 

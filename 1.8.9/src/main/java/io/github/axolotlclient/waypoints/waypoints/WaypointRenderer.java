@@ -51,7 +51,6 @@ public class WaypointRenderer {
 	private final Minecraft minecraft = Minecraft.getInstance();
 	private final Matrix4f view = new Matrix4f();
 	private final Vector4f viewProj = new Vector4f();
-
 	private final Set<Waypoint> worldRendererWaypoints = new HashSet<>();
 
 	public void render(float f) {

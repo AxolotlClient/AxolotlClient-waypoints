@@ -23,6 +23,8 @@
 package io.github.axolotlclient.waypoints.waypoints;
 
 import java.lang.Math;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -46,7 +48,7 @@ public class WaypointRenderer {
 	private final Minecraft minecraft = Minecraft.getInstance();
 	private final Matrix4f view = new Matrix4f();
 	private final Vector4f viewProj = new Vector4f();
-
+	private final Set<Waypoint> worldRendererWaypoints = new HashSet<>();
 
 	public void render(DeltaTracker deltaTracker) {
 		if (!AxolotlClientWaypoints.renderWaypoints.get()) return;
@@ -63,6 +65,7 @@ public class WaypointRenderer {
 		stack.mulPose(cam.rotation().invert());
 		var camPos = minecraft.gameRenderer.getMainCamera().getPosition();
 		float fov = (float) ((GameRendererAccessor) minecraft.gameRenderer).invokeGetFov(cam, deltaTracker.getGameTimeDeltaPartialTick(true), true);
+		worldRendererWaypoints.clear();
 
 		for (Waypoint waypoint : AxolotlClientWaypoints.getCurrentWaypoints()) {
 			profiler.push(waypoint.name());
@@ -91,6 +94,7 @@ public class WaypointRenderer {
 		if (projWidth < width && projHeight < height) {
 			return;
 		}
+		worldRendererWaypoints.add(waypoint);
 
 		stack.pushPose();
 		stack.translate(waypoint.x() - camPos.x(), waypoint.y() - camPos.y(), waypoint.z() - camPos.z());
@@ -207,7 +211,7 @@ public class WaypointRenderer {
 			pose.popPose();
 		}
 
-		if ((projWidth >= width || projHeight >= height) && _3dOnScreen) {
+		if ((projWidth >= width || projHeight >= height) && _3dOnScreen && worldRendererWaypoints.contains(waypoint)) {
 			return;
 		}
 
