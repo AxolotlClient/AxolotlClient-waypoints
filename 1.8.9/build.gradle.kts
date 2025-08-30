@@ -156,7 +156,7 @@ modrinth {
 	dependencies {
 		required.project("osl")
 		required.project("moehreag-legacy-lwjgl3")
-		optional.version("axolotlclient", project.property("axolotlclient").toString())
+		optional.version("axolotlclient", "${project.property("axolotlclient")}+$minecraftVersion")
 	}
 
 	// Changelog fetching: Credit LambdAurora.

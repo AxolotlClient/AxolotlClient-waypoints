@@ -10,8 +10,6 @@ Features:
 - World and level(/dimension)-specific waypoints
 - Worldmap
 
-This map mod also features reasonable performance by using map color values of blocks.
-
 Certain aspects of the mod can be disabled by servers:
 - Whether the minimap is enabled
 - Whether caves may be seen on the world map or the minimap

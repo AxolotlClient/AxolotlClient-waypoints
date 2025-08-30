@@ -139,7 +139,7 @@ modrinth {
 	additionalFiles.set(listOf(tasks.remapSourcesJar))
 	dependencies {
 		required.project("fabric-api")
-		optional.version("axolotlclient", project.property("axolotlclient").toString())
+		optional.version("axolotlclient", "${project.property("axolotlclient")}+$minecraftVersion")
 	}
 
 	// Changelog fetching: Credit LambdAurora.
