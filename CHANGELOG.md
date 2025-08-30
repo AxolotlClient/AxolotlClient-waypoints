@@ -1,5 +1,11 @@
 ## Changelog
 
+### 0.0.1-beta.11
+
+- fix 1.8.9 matrix access
+- add config options to AxolotlClient's menu for better accessibility
+- fix a few other bugs
+
 ### 0.0.1-beta.10
 
 - bump AxolotlClient dependency
