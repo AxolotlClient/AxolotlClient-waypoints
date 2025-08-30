@@ -120,7 +120,6 @@ tasks.register("generateVersionChangelog") {
 		val out = project.layout.buildDirectory.file("changelog").get().asFile.toPath()
 		if (matcher != null) {
 			var changelogContent: String = matcher.groups[1]?.value!!
-			changelogContent += "\n\n**Changelog:**\n"
 
 			val changelogLines = changelogText.split("\n")
 			val linkRefRegex = "^\\[([A-z0-9 _\\-/+.]+)]: ".toRegex()
@@ -136,6 +135,3 @@ tasks.register("generateVersionChangelog") {
 		}
 	}
 }
-
-
-

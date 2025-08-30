@@ -24,6 +24,7 @@ package io.github.axolotlclient.waypoints;
 
 import java.nio.file.Path;
 
+import io.github.axolotlclient.AxolotlClientConfig.api.options.OptionCategory;
 import io.github.axolotlclient.AxolotlClientConfig.api.ui.ConfigUI;
 import io.github.axolotlclient.bridge.util.AxoIdentifier;
 import net.fabricmc.loader.api.FabricLoader;
@@ -31,6 +32,7 @@ import net.fabricmc.loader.api.FabricLoader;
 public class AxolotlClientWaypointsCommon {
 
 	public static final String MODID = "axolotlclient_waypoints";
+	public static OptionCategory category = OptionCategory.create(MODID);
 	static final Path MOD_STORAGE_DIR = FabricLoader.getInstance().getGameDir().resolve("." + MODID);
 	public static final Path OPTIONS_PATH = FabricLoader.getInstance().getConfigDir().resolve(MODID).resolve("options.json");
 	public static final boolean AXOLOTLCLIENT_PRESENT = FabricLoader.getInstance().isModLoaded("axolotlclient");

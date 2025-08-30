@@ -55,7 +55,6 @@ import net.minecraft.block.state.BlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.render.TextRenderer;
 import net.minecraft.client.render.texture.DynamicTexture;
-import net.minecraft.client.world.color.BiomeColors;
 import net.minecraft.resource.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
@@ -83,7 +82,6 @@ public class WorldMapScreen extends Screen {
 	private boolean initializedOnce = false;
 	private Runnable optionUpdate;
 	private final TextRenderer font = Minecraft.getInstance().textRenderer;
-	private final Matrix4fStack matrixStack = new Matrix4fStack(16);
 
 	public WorldMapScreen() {
 		super(AxolotlClientWaypoints.tr("worldmap"));
@@ -98,30 +96,22 @@ public class WorldMapScreen extends Screen {
 	public void render(int mouseX, int mouseY, float partialTick) {
 		super.renderBackground(0);
 		GlStateManager.pushMatrix();
-		matrixStack.clear();
-		matrixStack.pushMatrix();
 		GlStateManager.translatef(width / 2f, height / 2f, 0);
-		matrixStack.translate(width / 2f, height / 2f, 0);
 		GlStateManager.translatef(dragOffset.x(), dragOffset.y(), dragOffset.z());
-		matrixStack.translate(dragOffset.x(), dragOffset.y(), dragOffset.z());
 		GlStateManager.pushMatrix();
-		matrixStack.pushMatrix();
 		GlStateManager.scalef(scale, scale, 1);
-		matrixStack.scale(scale, scale, 1);
 
 		var player = minecraft.player;
 
 		for (LazyTile tile : tiles.values()) {
-			tile.render(matrixStack, (float) player.x, (float) player.z, scale, partialTick, caveY, atSurface, width, height);
+			tile.render(AxolotlClientWaypoints.MATRIX_STACK, (float) player.x, (float) player.z, scale, partialTick, caveY, atSurface, width, height);
 		}
 
 		int x = getWorldX(mouseX);
 		int z = getWorldZ(mouseY);
 		{
-			matrixStack.pushMatrix();
 			GlStateManager.pushMatrix();
 			GlStateManager.translatef((float) -player.x, (float) -player.z, 0);
-			matrixStack.translate((float) -player.x, (float) -player.z, 0);
 			int tileX = x / TILE_SIZE;
 			int tileY = z / TILE_SIZE;
 			if (x < 0 && x % TILE_SIZE != 0) {
@@ -130,15 +120,12 @@ public class WorldMapScreen extends Screen {
 			if (z < 0 && z % TILE_SIZE != 0) {
 				tileY -= 1;
 			}
-			matrixStack.translate(tileX * TILE_SIZE, tileY * TILE_SIZE, 0);
 			GlStateManager.translatef(tileX * TILE_SIZE, tileY * TILE_SIZE, 0);
 			fill(0, 0, TILE_SIZE, TILE_SIZE, 0x33FFFFFF);
 			DrawUtil.outlineRect(0, 0, TILE_SIZE, TILE_SIZE, 0x33FFFFFF);
-			matrixStack.popMatrix();
 			GlStateManager.popMatrix();
 		}
 
-		matrixStack.popMatrix();
 		GlStateManager.popMatrix();
 		renderMapWaypoints(mouseX, mouseY);
 
@@ -148,7 +135,6 @@ public class WorldMapScreen extends Screen {
 		GlStateManager.translatef(-arrowSize / 2f, -arrowSize / 2f, 5);
 		minecraft.getTextureManager().bind(Minimap.arrowLocation);
 		drawTexture(0, 0, 0, 0, arrowSize, arrowSize, arrowSize, arrowSize);
-		matrixStack.popMatrix();
 		GlStateManager.popMatrix();
 		super.render(mouseX, mouseY, partialTick);
 
@@ -189,7 +175,7 @@ public class WorldMapScreen extends Screen {
 	}
 
 	private int getWorldX(double guiX) {
-		return MathHelper.floor(minecraft.player.z - ((width / 2f + dragOffset.x()) - guiX) / scale);
+		return MathHelper.floor(minecraft.player.x - ((width / 2f + dragOffset.x()) - guiX) / scale);
 	}
 
 	private int getWorldZ(double guiZ) {
@@ -199,19 +185,16 @@ public class WorldMapScreen extends Screen {
 	private void renderMapWaypoints(int mouseX, int mouseY) {
 		if (!AxolotlClientWaypoints.renderWaypoints.get()) return;
 		GlStateManager.pushMatrix();
-		matrixStack.pushMatrix();
 		var pos = new Vector3f();
 		hoveredWaypoint = null;
 		for (Waypoint waypoint : AxolotlClientWaypoints.getCurrentWaypoints()) {
 			GlStateManager.pushMatrix();
-			matrixStack.pushMatrix();
 			float posX = (float) (waypoint.x() - minecraft.player.x) + 1;
 			float posY = (float) (waypoint.z() - minecraft.player.z) + 1;
 
-			matrixStack.translate(posX * scale, posY * scale, 0);
 			GlStateManager.translatef(posX * scale, posY * scale, 0);
 			pos.zero();
-			matrixStack.transformPosition(pos);
+			AxolotlClientWaypoints.MATRIX_STACK.transformPosition(pos);
 
 			int textWidth = font.getWidth(waypoint.display());
 			int width = textWidth + Waypoint.displayXOffset() * 2;
@@ -227,10 +210,8 @@ public class WorldMapScreen extends Screen {
 					DrawUtil.outlineRect(-width / 2, -height / 2, width, height, Colors.WHITE.toInt());
 				}
 			}
-			matrixStack.popMatrix();
 			GlStateManager.popMatrix();
 		}
-		matrixStack.popMatrix();
 		GlStateManager.popMatrix();
 	}
 
@@ -623,9 +604,7 @@ public class WorldMapScreen extends Screen {
 			float x = tilePosX() * TILE_SIZE - playerX;
 			float y = tilePosY() * TILE_SIZE - playerZ;
 			GlStateManager.pushMatrix();
-			matrixStack.pushMatrix();
 			GlStateManager.translatef(x, y, 0);
-			matrixStack.translate(x, y, 0);
 			pos.zero();
 			matrixStack.transformPosition(pos);
 			if (pos.x + TILE_SIZE * scale >= 0 && pos.x < guiWidth && pos.y + TILE_SIZE * scale >= 0 && pos.y < guiHeight) {
@@ -643,7 +622,6 @@ public class WorldMapScreen extends Screen {
 					drawTexture(0, 0, 0, 0, TILE_SIZE, TILE_SIZE, TILE_SIZE, TILE_SIZE);
 				}
 			}
-			matrixStack.popMatrix();
 			GlStateManager.popMatrix();
 		}
 
@@ -773,7 +751,7 @@ public class WorldMapScreen extends Screen {
 					if (mapColor == MapColor.WATER) {
 						var floorBlock = levelChunk.getBlockState(mutableBlockPos2);
 						var floorColor = floorBlock.getBlock().getMapColor(floorBlock).color;
-						int biomeColor = BiomeColors.getWaterColor(level, mutableBlockPos);
+						int biomeColor = mapColor.color; //BiomeColors.getWaterColor(level, mutableBlockPos);
 						float shade = 1.0f;
 						int waterColor = biomeColor;
 						waterColor = ARGB.colorFromFloat(1f, ARGB.redFloat(waterColor) * shade, ARGB.greenFloat(waterColor) * shade, ARGB.blueFloat(waterColor) * shade);

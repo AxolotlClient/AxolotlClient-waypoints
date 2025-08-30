@@ -43,7 +43,6 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.chunk.WorldChunk;
 import net.ornithemc.osl.lifecycle.api.client.MinecraftClientEvents;
-import org.joml.Matrix4fStack;
 import org.joml.Vector3f;
 
 public class Minimap extends MinimapCommon {
@@ -56,13 +55,12 @@ public class Minimap extends MinimapCommon {
 	private int mapCenterX, mapCenterZ;
 	private boolean usingHud;
 	public boolean allowCaves = true;
-	private final Matrix4fStack matrixStack = new Matrix4fStack(5);
 
 	private final Minecraft minecraft = Minecraft.getInstance();
 
 	public void init() {
 		minimap.add(enabled, lockMapToNorth, arrowScale, minimapOutline, outlineColor, enableBiomeBlending, mapScale, showWaypoints, showCardinalDirections);
-		AxolotlClientWaypoints.category.add(Minimap.minimap);
+		AxolotlClientWaypointsCommon.category.add(Minimap.minimap);
 		if (AxolotlClientWaypointsCommon.AXOLOTLCLIENT_PRESENT) {
 			usingHud = true;
 			var save = HudCreator.createHud(this);
@@ -105,14 +103,17 @@ public class Minimap extends MinimapCommon {
 		renderMap();
 	}
 
+
 	public void renderMap() {
 		if (!isEnabled()) {
 			return;
 		}
-		matrixStack.clear().pushMatrix();
+		GlStateManager.color4f(1, 1, 1, 1);
 		GlStateManager.pushMatrix();
 		{
-			DrawUtil.pushScissor(x, y, size, size);
+			var vec1 = AxolotlClientWaypoints.MATRIX_STACK.transformPosition(x, y, 0, new Vector3f());
+			var vec2 = AxolotlClientWaypoints.MATRIX_STACK.transformPosition(x+size, y+size, 0, new Vector3f());
+			DrawUtil.pushScissor(MathHelper.floor(vec1.x), MathHelper.floor(vec1.y), MathHelper.floor(vec2.x-vec1.x), MathHelper.floor(vec2.y-vec1.y));
 			GlStateManager.pushMatrix();
 			GlStateManager.translatef(x, y, 0);
 			GlStateManager.translatef(radius, radius, 0);
@@ -140,22 +141,21 @@ public class Minimap extends MinimapCommon {
 		}
 		if (showCardinalDirections.get()) {
 			Vector3f pos = new Vector3f();
-			matrixStack.pushMatrix();
 			var directions = new String[]{"N", "W", "E", "S"};
 			for (int i : new int[]{-2, 1, 2, -1}) {
 				var label = directions[i < 0 ? i + 2 : i + 1];
 				var labelWidth = minecraft.textRenderer.getWidth(label);
 				var labelHeight = minecraft.textRenderer.fontHeight;
-				matrixStack.pushMatrix();
-				matrixStack.identity();
-				matrixStack.translate(x + radius, y + radius, 0);
+				AxolotlClientWaypoints.MATRIX_STACK.pushMatrix();
+				AxolotlClientWaypoints.MATRIX_STACK.identity();
+				AxolotlClientWaypoints.MATRIX_STACK.translate(x + radius, y + radius, 0);
 				if (!lockMapToNorth.get()) {
-					matrixStack.rotate((float) -(((minecraft.player.getHeadYaw() + 180) / 180) * Math.PI), 0, 0, 1);
+					AxolotlClientWaypoints.MATRIX_STACK.rotate((float) -(((minecraft.player.getHeadYaw() + 180) / 180) * Math.PI), 0, 0, 1);
 				}
-				matrixStack.translate((i % 2) * size, ((int) (i / 2f)) * size, 0);
+				AxolotlClientWaypoints.MATRIX_STACK.translate((i % 2) * size, ((int) (i / 2f)) * size, 0);
 				pos.zero();
-				matrixStack.transformPosition(pos);
-				matrixStack.popMatrix();
+				AxolotlClientWaypoints.MATRIX_STACK.transformPosition(pos);
+				AxolotlClientWaypoints.MATRIX_STACK.popMatrix();
 				pos.x = MathHelper.clamp(pos.x, x, x + size);
 				pos.y = MathHelper.clamp(pos.y, y, y + size);
 				GlStateManager.pushMatrix();
@@ -165,7 +165,6 @@ public class Minimap extends MinimapCommon {
 				minecraft.textRenderer.draw(label, -labelWidth / 2, -labelHeight / 2, -1);
 				GlStateManager.popMatrix();
 			}
-			matrixStack.popMatrix();
 		}
 
 		GlStateManager.pushMatrix();
@@ -180,35 +179,32 @@ public class Minimap extends MinimapCommon {
 		GuiElement.drawTexture(0, 0, 0, 0, arrowSize, arrowSize, arrowSize, arrowSize);
 		GlStateManager.popMatrix();
 
-		matrixStack.popMatrix();
 		GlStateManager.popMatrix();
 	}
 
 	private void renderMapWaypoints() {
 		if (!AxolotlClientWaypoints.renderWaypoints.get()) return;
-		matrixStack.pushMatrix();
 		GlStateManager.pushMatrix();
 		Vector3f pos = new Vector3f();
 		for (Waypoint waypoint : AxolotlClientWaypoints.getCurrentWaypoints()) {
-			matrixStack.pushMatrix();
 			GlStateManager.pushMatrix();
 			float posX = (float) (waypoint.x() - minecraft.player.x);
 			float posY = (float) (waypoint.z() - minecraft.player.z);
 
 			{
 				pos.zero();
-				matrixStack.pushMatrix();
-				matrixStack.identity();
-				matrixStack.translate(x, y, 0);
-				matrixStack.translate(radius, radius, 0);
-				matrixStack.scale((float) Math.sqrt(2), (float) Math.sqrt(2), 1);
-				matrixStack.scale(mapScale.get(), mapScale.get(), 1);
+				AxolotlClientWaypoints.MATRIX_STACK.pushMatrix();
+				AxolotlClientWaypoints.MATRIX_STACK.identity();
+				AxolotlClientWaypoints.MATRIX_STACK.translate(x, y, 0);
+				AxolotlClientWaypoints.MATRIX_STACK.translate(radius, radius, 0);
+				AxolotlClientWaypoints.MATRIX_STACK.scale((float) Math.sqrt(2), (float) Math.sqrt(2), 1);
+				AxolotlClientWaypoints.MATRIX_STACK.scale(mapScale.get(), mapScale.get(), 1);
 				if (!lockMapToNorth.get()) {
-					matrixStack.rotate((float) -Math.toRadians(minecraft.player.headYaw + 180), 0, 0, 1);
+					AxolotlClientWaypoints.MATRIX_STACK.rotate((float) -Math.toRadians(minecraft.player.headYaw + 180), 0, 0, 1);
 				}
-				matrixStack.translate(posX, posY, 1);
-				matrixStack.transformPosition(pos);
-				matrixStack.popMatrix();
+				AxolotlClientWaypoints.MATRIX_STACK.translate(posX, posY, 1);
+				AxolotlClientWaypoints.MATRIX_STACK.transformPosition(pos);
+				AxolotlClientWaypoints.MATRIX_STACK.popMatrix();
 			}
 
 			{
@@ -222,10 +218,8 @@ public class Minimap extends MinimapCommon {
 			int textHeight = minecraft.textRenderer.fontHeight;
 			GuiElement.fill(-(textWidth / 2) - Waypoint.displayXOffset(), -(textHeight / 2) - Waypoint.displayYOffset(), (textWidth / 2) + Waypoint.displayXOffset(), (textHeight / 2) + Waypoint.displayYOffset(), waypoint.color().toInt());
 			minecraft.textRenderer.draw(waypoint.display(), -(textWidth / 2f), -textHeight / 2f, -1, false);
-			matrixStack.popMatrix();
 			GlStateManager.popMatrix();
 		}
-		matrixStack.popMatrix();
 		GlStateManager.popMatrix();
 	}
 

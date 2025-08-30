@@ -50,7 +50,6 @@ import net.minecraft.client.gui.components.AbstractSliderButton;
 import net.minecraft.client.gui.components.ImageButton;
 import net.minecraft.client.gui.components.WidgetSprites;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.renderer.BiomeColors;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -708,7 +707,7 @@ public class WorldMapScreen extends Screen {
 					if (mapColor == MapColor.WATER) {
 						var floorBlock = levelChunk.getBlockState(mutableBlockPos2);
 						var floorColor = floorBlock.getMapColor(level, mutableBlockPos2).col;
-						int biomeColor = BiomeColors.getAverageWaterColor(level, mutableBlockPos);
+						int biomeColor = mapColor.col; //BiomeColors.getAverageWaterColor(level, mutableBlockPos);
 						float shade = level.getShade(Direction.UP, true);
 						int waterColor = biomeColor;
 						waterColor = ARGB.colorFromFloat(1f, ARGB.redFloat(waterColor) * shade, ARGB.greenFloat(waterColor) * shade, ARGB.blueFloat(waterColor) * shade);

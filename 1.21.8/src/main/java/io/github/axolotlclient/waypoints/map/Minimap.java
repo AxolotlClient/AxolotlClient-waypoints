@@ -67,7 +67,7 @@ public class Minimap extends MinimapCommon {
 
 	public void init() {
 		minimap.add(enabled, lockMapToNorth, arrowScale, minimapOutline, outlineColor, enableBiomeBlending, mapScale, showWaypoints, showCardinalDirections);
-		AxolotlClientWaypoints.category.add(minimap);
+		AxolotlClientWaypointsCommon.category.add(minimap);
 		if (AxolotlClientWaypointsCommon.AXOLOTLCLIENT_PRESENT) {
 			usingHud = true;
 			var save = HudCreator.createHud(this);

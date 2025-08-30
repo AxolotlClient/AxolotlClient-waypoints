@@ -66,7 +66,6 @@ public class AxolotlClientWaypoints implements ClientModInitializer {
 	public static final WaypointRenderer WAYPOINT_RENDERER = new WaypointRenderer();
 	public static final Listener NETWORK_LISTENER = new Listener();
 
-	public static OptionCategory category = OptionCategory.create(AxolotlClientWaypointsCommon.MODID);
 	private final OptionCategory waypoints = OptionCategory.create("waypoints");
 	public static BooleanOption renderWaypoints = new BooleanOption("render_waypoints", true);
 	public static BooleanOption renderWaypointsInWorld = new BooleanOption("render_waypoints_in_world", true);
@@ -81,7 +80,7 @@ public class AxolotlClientWaypoints implements ClientModInitializer {
 		AxolotlClientWaypointsCommon.init();
 		MINIMAP.init();
 
-		category.add(waypoints);
+		AxolotlClientWaypointsCommon.category.add(waypoints);
 		waypoints.add(renderWaypoints, renderWaypointsInWorld, renderOutOfViewWaypointsOnScreenEdge);
 
 		try {
@@ -90,7 +89,7 @@ public class AxolotlClientWaypoints implements ClientModInitializer {
 			log.warn("Failed to create config dir, options may not save correctly!", e);
 		}
 		ConfigManager configManager;
-		AxolotlClientConfig.getInstance().register(configManager = new VersionedJsonConfigManager(AxolotlClientWaypointsCommon.OPTIONS_PATH, category, 1,
+		AxolotlClientConfig.getInstance().register(configManager = new VersionedJsonConfigManager(AxolotlClientWaypointsCommon.OPTIONS_PATH, AxolotlClientWaypointsCommon.category, 1,
 			(oldVersion, newVersion, rootCategory, json) -> json));
 		configManager.load();
 		configManager.save();
@@ -111,7 +110,7 @@ public class AxolotlClientWaypoints implements ClientModInitializer {
 	}
 
 	public static Screen createOptionsScreen(Screen parent) {
-		return ConfigStyles.createScreen(parent, category);
+		return ConfigStyles.createScreen(parent, AxolotlClientWaypointsCommon.category);
 	}
 
 	public static ResourceLocation rl(String path) {

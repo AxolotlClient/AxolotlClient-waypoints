@@ -22,6 +22,7 @@
 
 package io.github.axolotlclient.waypoints;
 
+import io.github.axolotlclient.AxolotlClientCommon;
 import io.github.axolotlclient.AxolotlClientConfig.api.AxolotlClientConfig;
 import io.github.axolotlclient.AxolotlClientConfig.impl.managers.JsonConfigManager;
 import io.github.axolotlclient.bridge.events.Events;
@@ -48,7 +49,10 @@ public class HudCreator {
 		AxolotlClientConfig.getInstance().register(hudConfigManager);
 		hudConfigManager.load();
 		MinimapCommon.minimap.add(hud.getAllOptions(), false);
-		Events.CLIENT_READY.register(() -> HudManagerCommon.getInstance().addNonConfigured(hud));
+		Events.CLIENT_READY.register(() -> {
+			AxolotlClientCommon.getInstance().getConfig().config.add(AxolotlClientWaypointsCommon.category, false);
+			HudManagerCommon.getInstance().addNonConfigured(hud);
+		});
 		return hudConfigManager::save;
 	}
 }
