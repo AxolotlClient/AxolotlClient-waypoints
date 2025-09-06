@@ -33,9 +33,7 @@ import java.util.function.Supplier;
 import com.google.common.collect.Lists;
 import com.mojang.blaze3d.platform.GlStateManager;
 import io.github.axolotlclient.AxolotlClientConfig.api.util.Colors;
-import io.github.axolotlclient.AxolotlClientConfig.impl.ui.Element;
 import io.github.axolotlclient.AxolotlClientConfig.impl.ui.Screen;
-import io.github.axolotlclient.AxolotlClientConfig.impl.ui.Selectable;
 import io.github.axolotlclient.AxolotlClientConfig.impl.util.DrawUtil;
 import io.github.axolotlclient.waypoints.AxolotlClientWaypoints;
 import io.github.axolotlclient.waypoints.map.util.LevelChunkStorage;
@@ -334,17 +332,10 @@ public class WorldMapScreen extends Screen {
 		Minecraft minecraft = Minecraft.getInstance();
 		var anchorX = chunkX << 4;
 		var anchorZ = chunkZ << 4;
-		//anchorZ = anchorZ - anchorZ % TILE_SIZE;
-		//anchorX = anchorX - anchorX % TILE_SIZE;
 		var level = minecraft.world;
 		int tileX = anchorX / TILE_SIZE;
 		int tileY = anchorZ / TILE_SIZE;
-		/*if (anchorX < 0 && anchorX % TILE_SIZE != 0) {
-			tileX -= 1;
-		}
-		if (anchorZ < 0 && anchorZ % TILE_SIZE != 0) {
-			tileY -= 1;
-		}*/
+
 		var tileChunk = level.getChunkAt(tileX, tileY);
 		if (tileChunk != null) {
 			var dir = getCurrentLevelMapSaveDir();
@@ -358,9 +349,6 @@ public class WorldMapScreen extends Screen {
 		}
 	}
 
-	private double dragMouseX;
-	private double dragMouseY;
-
 	@Override
 	public boolean mouseClicked(double mouseX, double mouseY, int button) {
 		if (!super.mouseClicked(mouseX, mouseY, button)) {
@@ -373,9 +361,6 @@ public class WorldMapScreen extends Screen {
 					minecraft.openScreen(new ContextMenuScreen(this, mouseX, mouseY, new ContextMenuScreen.Type.Map(dimension, worldX, getY(worldX, worldZ), worldZ)));
 				}
 				return true;
-			} else if (button == 0) {
-				dragMouseX = (mouseX - dragOffset.x);
-				dragMouseY = (mouseY - dragOffset.y);
 			}
 			return false;
 		}
@@ -386,7 +371,7 @@ public class WorldMapScreen extends Screen {
 	public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
 		if (!super.mouseDragged(mouseX, mouseY, button, dragX, dragY)) {
 			if (button == 0) {
-				dragOffset.set((float) (mouseX - dragMouseX), (float) (mouseY - dragMouseY), 0);
+				dragOffset.add((float) dragX, (float) dragY, 0);
 				return true;
 			}
 			return false;
@@ -418,49 +403,6 @@ public class WorldMapScreen extends Screen {
 
 	@Override
 	public void init() {
-		class Overlay implements Element, Selectable {
-
-			@Override
-			public boolean isFocused() {
-				return true;
-			}
-
-			@Override
-			public void setFocused(boolean focused) {
-
-			}
-
-			@Override
-			public SelectionType getType() {
-				return SelectionType.NONE;
-			}
-
-			@Override
-			public boolean isMouseOver(double mouseX, double mouseY) {
-				return true;
-			}
-
-			boolean called = false;
-
-			@Override
-			public boolean mouseScrolled(double mouseX, double mouseY, double amountX, double amountY) {
-				if (called) return false;
-				called = true;
-				var bl = WorldMapScreen.this.mouseScrolled(mouseX, mouseY, amountX, amountY);
-				called = false;
-				return bl;
-			}
-
-			@Override
-			public boolean mouseDragged(double mouseX, double mouseY, int button, double deltaX, double deltaY) {
-				if (called) return false;
-				called = true;
-				var bl = WorldMapScreen.super.mouseDragged(mouseX, mouseY, button, deltaX, deltaY);
-				called = false;
-				return bl;
-			}
-		}
-		addSelectableChild(new Overlay());
 		addDrawableChild(new ImageButton(4, height - 20, 16, 16, new ImageButton.WidgetSprites(OPTIONS_SPRITE, OPTIONS_SPRITE, OPTIONS_HOVERED_SPRITE),
 			btn -> minecraft.openScreen(AxolotlClientWaypoints.createOptionsScreen(this)), AxolotlClientWaypoints.tr("options")));
 		var slider = addDrawableChild(new AbstractSliderButton(width - 150, 20, 150, 20, AxolotlClientWaypoints.tr("player_y"), 0) {
