@@ -56,22 +56,15 @@ dependencies {
 	runtimeOnly("org.lwjgl:lwjgl-nanovg:${lwjglVersion}:natives-macos")
 	runtimeOnly("org.lwjgl:lwjgl-nanovg:${lwjglVersion}:natives-macos-arm64")
 
-	/*include("org.apache.logging.log4j:log4j-slf4j-impl:2.0-beta9") {
-		exclude(group = "org.apache.logging.log4j", module = "log4j-api")
-		exclude(group = "org.apache.logging.log4j", module = "log4j-core")
-	}
-	implementation(include("org.slf4j:slf4j-api:1.7.36")!!)
-	localRuntime("org.slf4j:slf4j-jdk14:1.7.36")*/
-
 	//compileOnly("org.lwjgl:lwjgl-glfw:${lwjglVersion}")
 
-	modCompileOnly("io.github.moehreag:legacy-lwjgl3:${project.property("legacy_lwgjl3")}")
-	modLocalRuntime("io.github.moehreag:legacy-lwjgl3:${project.property("legacy_lwgjl3")}:all-remapped")
+	modImplementation("io.github.moehreag:legacy-lwjgl3:${project.property("legacy_lwgjl3")}")
 
 	implementation(include("org.joml:joml:1.10.8")!!)
 }
 
 configurations.configureEach {
+	exclude("org.lwjgl.lwjgl")
 	resolutionStrategy {
 		dependencySubstitution {
 			substitute(module("io.netty:netty-all:4.0.23.Final")).using(module("io.netty:netty-all:4.1.9.Final"))

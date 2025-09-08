@@ -1,5 +1,9 @@
 ## Changelog
 
+### 0.0.1-beta.15
+
+- add tolerance for waypoint distance & name rendering, currently 1/4 of the screen size on each side
+
 ### 0.0.1-beta.14
 
 - fix water colors for 1.20.1 + 1.21.1

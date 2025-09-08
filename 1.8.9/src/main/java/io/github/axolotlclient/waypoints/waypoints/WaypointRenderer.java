@@ -22,9 +22,10 @@
 
 package io.github.axolotlclient.waypoints.waypoints;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicReference;
 
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.vertex.BufferBuilder;
@@ -148,14 +149,15 @@ public class WaypointRenderer {
 		var win = new Window(minecraft);
 
 		GlStateManager.pushMatrix();
-		var positionDrawer = new AtomicReference<Runnable>();
-		for (Waypoint waypoint : AxolotlClientWaypoints.getCurrentWaypoints()) {
+		var waypoints = AxolotlClientWaypoints.getCurrentWaypoints();
+		var positionDrawers = new ArrayList<Runnable>(waypoints.size());
+		for (Waypoint waypoint : waypoints) {
 			GlStateManager.pushMatrix();
-			renderWaypoint(waypoint, tick, cam, positionDrawer, win.getWidth(), win.getHeight());
+			renderWaypoint(waypoint, tick, cam, positionDrawers, win.getWidth(), win.getHeight());
 			GlStateManager.popMatrix();
 		}
-		if (positionDrawer.get() != null) {
-			positionDrawer.get().run();
+		if (!positionDrawers.isEmpty()) {
+			positionDrawers.forEach(Runnable::run);
 		}
 		GlStateManager.popMatrix();
 		profiler.pop();
@@ -166,7 +168,7 @@ public class WaypointRenderer {
 		return matrix4f.perspective(fov * ((float) Math.PI / 180F), (float) this.minecraft.width / (float) this.minecraft.height, 0.05F, minecraft.options.viewDistance * 4);
 	}
 
-	private void renderWaypoint(Waypoint waypoint, float tick, Entity camera, AtomicReference<Runnable> positionDrawn, int guiWidth, int guiHeight) {
+	private void renderWaypoint(Waypoint waypoint, float tick, Entity camera, List<Runnable> positionDrawn, int guiWidth, int guiHeight) {
 		var fov = ((GameRendererAccessor) minecraft.gameRenderer).invokeGetFov(tick, false);
 
 		var textWidth = minecraft.textRenderer.getWidth(waypoint.display());
@@ -208,16 +210,18 @@ public class WaypointRenderer {
 		} else {
 			_3dOnScreen = false;
 		}
-		if (positionDrawn.get() == null && Math.abs(result.x() - guiWidth / 2f) < (_3dOnScreen ? Math.max(projWidth, width) : width) / 2f && Math.abs(result.y() - guiHeight / 2f) < (_3dOnScreen ? Math.max(height, projHeight) : height) / 2f) {
-			positionDrawn.set(() -> {
+		boolean displayX = Math.abs(result.x() - guiWidth / 2f) < (_3dOnScreen ? Math.max(projWidth, width) : width) / 2f + guiWidth / 4f;
+		boolean displayY = Math.abs(result.y() - guiHeight / 2f) < (_3dOnScreen ? Math.max(height, projHeight) : height) / 2f + guiHeight / 4f;
+		if (displayX && displayY) {
+			positionDrawn.add(() -> {
 				var line1 = waypoint.name();
 				GlStateManager.pushMatrix();
 				GlStateManager.translatef(result.x(), result.y(), 0);
 				GlStateManager.translatef(0, Math.max(height, projHeight + 4) / 2f + 4, 0);
 				if ((projWidth >= width || projHeight >= height) && _3dOnScreen) {
-					float y = result.y()+Math.max(height, projHeight + 4) / 2f + 4;
-					var y2 = Math.min(y, displayEnd.y()+6);
-					GlStateManager.translatef(0, y2-y, 0);
+					float y = result.y() + Math.max(height, projHeight + 4) / 2f + 4;
+					var y2 = Math.min(y, displayEnd.y() + 6);
+					GlStateManager.translatef(0, y2 - y, 0);
 				}
 				int line1W = minecraft.textRenderer.getWidth(line1);
 				GuiElement.fill(-line1W / 2 - 2, -2, line1W / 2 + 2, minecraft.textRenderer.fontHeight + 2, Colors.GRAY.withAlpha(100).toInt());

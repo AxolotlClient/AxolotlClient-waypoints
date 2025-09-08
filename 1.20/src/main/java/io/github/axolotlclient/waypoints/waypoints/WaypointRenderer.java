@@ -23,9 +23,10 @@
 package io.github.axolotlclient.waypoints.waypoints;
 
 import java.lang.Math;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicReference;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -123,20 +124,21 @@ public class WaypointRenderer {
 
 		graphics.pose().pushPose();
 		graphics.pose().translate(0.0F, 0.0F, -100.0F);
-		var positionDrawer = new AtomicReference<Runnable>();
-		for (Waypoint waypoint : AxolotlClientWaypoints.getCurrentWaypoints()) {
+		var waypoints = AxolotlClientWaypoints.getCurrentWaypoints();
+		var positionDrawers = new ArrayList<Runnable>(waypoints.size());
+		for (Waypoint waypoint : waypoints) {
 			graphics.pose().pushPose();
-			renderWaypoint(waypoint, graphics, delta, cam, positionDrawer);
+			renderWaypoint(waypoint, graphics, delta, cam, positionDrawers);
 			graphics.pose().popPose();
 		}
-		if (positionDrawer.get() != null) {
-			positionDrawer.get().run();
+		if (!positionDrawers.isEmpty()) {
+			positionDrawers.forEach(Runnable::run);
 		}
 		graphics.pose().popPose();
 		profiler.pop();
 	}
 
-	private void renderWaypoint(Waypoint waypoint, GuiGraphics graphics, float tick, Camera camera, AtomicReference<Runnable> positionDrawn) {
+	private void renderWaypoint(Waypoint waypoint, GuiGraphics graphics, float tick, Camera camera, List<Runnable> positionDrawn) {
 		var fov = ((GameRendererAccessor) minecraft.gameRenderer).invokeGetFov(camera, tick, false);
 		var pose = graphics.pose();
 
@@ -181,14 +183,16 @@ public class WaypointRenderer {
 		} else {
 			_3dOnScreen = false;
 		}
-		if (positionDrawn.get() == null && Math.abs(result.x() - graphics.guiWidth() / 2f) < (_3dOnScreen ? Math.max(projWidth, width) : width) / 2f && Math.abs(result.y() - graphics.guiHeight() / 2f) < (_3dOnScreen ? Math.max(height, projHeight) : height) / 2f) {
+		boolean displayX = Math.abs(result.x() - graphics.guiWidth() / 2f) < (_3dOnScreen ? Math.max(projWidth, width) : width) / 2f + graphics.guiWidth() / 4f;
+		boolean displayY = Math.abs(result.y() - graphics.guiHeight() / 2f) < (_3dOnScreen ? Math.max(height, projHeight) : height) / 2f + graphics.guiHeight() / 4f;
+		if (displayX && displayY) {
 			pose.pushPose();
 			pose.translate(0, Math.max(height, projHeight + 4) / 2f + 4, 0);
 			var pos = pose.last().pose().transformPosition(new Vector3f());
 			if ((projWidth >= width || projHeight >= height) && _3dOnScreen) {
-				pos.y = Math.min(pos.y, displayEnd.y()+6);
+				pos.y = Math.min(pos.y, displayEnd.y() + 6);
 			}
-			positionDrawn.set(() -> {
+			positionDrawn.add(() -> {
 				var line1 = waypoint.name();
 				pose.pushPose();
 				pose.last().pose().translate(pos);
