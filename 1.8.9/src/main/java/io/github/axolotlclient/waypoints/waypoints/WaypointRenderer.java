@@ -206,7 +206,8 @@ public class WaypointRenderer {
 			_3dOnScreen = minX > 0 && minY > 0 && minX < guiWidth && minY < guiHeight ||
 				minX > 0 && maxY > 0 && minX < guiWidth && maxY < guiHeight ||
 				maxX > 0 && maxY > 0 && maxX < guiWidth && maxY < guiHeight ||
-				maxX > 0 && minY > 0 && maxX < guiWidth && minY < guiHeight;
+				maxX > 0 && minY > 0 && maxX < guiWidth && minY < guiHeight ||
+				minX < guiWidth && maxX > 0 && minY < guiHeight && maxY > 0;
 		} else {
 			_3dOnScreen = false;
 		}
