@@ -139,7 +139,7 @@ public class WaypointRenderer {
 	}
 
 	private void renderWaypoint(Waypoint waypoint, GuiGraphics graphics, float tick, Camera camera, List<Runnable> positionDrawn) {
-		var fov = ((GameRendererAccessor) minecraft.gameRenderer).invokeGetFov(camera, tick, false);
+		var fov = ((GameRendererAccessor) minecraft.gameRenderer).invokeGetFov(camera, tick, true);
 		var pose = graphics.pose();
 
 		var textWidth = minecraft.font.width(waypoint.display());

@@ -144,7 +144,7 @@ public class WaypointRenderer {
 
 	private void renderWaypoint(Waypoint waypoint, GuiGraphics graphics, DeltaTracker tracker, Camera camera, List<Runnable> positionDrawn) {
 		var tick = tracker.getGameTimeDeltaPartialTick(true);
-		var fov = ((GameRendererAccessor) minecraft.gameRenderer).invokeGetFov(camera, tick, false);
+		var fov = ((GameRendererAccessor) minecraft.gameRenderer).invokeGetFov(camera, tick, true);
 		var pose = graphics.pose();
 
 		var textWidth = minecraft.font.width(waypoint.display());

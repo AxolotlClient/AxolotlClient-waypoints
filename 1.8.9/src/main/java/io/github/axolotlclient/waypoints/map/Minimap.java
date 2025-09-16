@@ -42,7 +42,6 @@ import net.minecraft.resource.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.chunk.WorldChunk;
-import net.ornithemc.osl.lifecycle.api.client.MinecraftClientEvents;
 import org.joml.Vector3f;
 
 public class Minimap extends MinimapCommon {
@@ -59,12 +58,11 @@ public class Minimap extends MinimapCommon {
 	private final Minecraft minecraft = Minecraft.getInstance();
 
 	public void init() {
-		minimap.add(enabled, lockMapToNorth, arrowScale, minimapOutline, outlineColor, enableBiomeBlending, mapScale, showWaypoints, showCardinalDirections);
+		super.init();
 		AxolotlClientWaypointsCommon.category.add(Minimap.minimap);
 		if (AxolotlClientWaypointsCommon.AXOLOTLCLIENT_PRESENT) {
 			usingHud = true;
-			var save = HudCreator.createHud(this);
-			MinecraftClientEvents.STOP.register(mc -> save.run());
+			HudCreator.createHud(this);
 		}
 	}
 

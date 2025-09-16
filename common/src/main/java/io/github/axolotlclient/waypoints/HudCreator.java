@@ -26,6 +26,7 @@ import io.github.axolotlclient.AxolotlClientCommon;
 import io.github.axolotlclient.AxolotlClientConfig.api.AxolotlClientConfig;
 import io.github.axolotlclient.AxolotlClientConfig.impl.managers.JsonConfigManager;
 import io.github.axolotlclient.bridge.events.Events;
+import io.github.axolotlclient.config.profiles.ProfileAware;
 import io.github.axolotlclient.modules.hud.HudManagerCommon;
 import io.github.axolotlclient.waypoints.map.MinimapCommon;
 import io.github.axolotlclient.waypoints.map.MinimapHudEntry;
@@ -38,21 +39,42 @@ import io.github.axolotlclient.waypoints.map.MinimapHudEntry;
  */
 public class HudCreator {
 
-	public static Runnable createHud(MinimapCommon minimap) {
+	public static void createHud(MinimapCommon minimap) {
 		var hud = new MinimapHudEntry(minimap);
 		hud.setEnabled(true);
-		var hudConfigManager = new JsonConfigManager(AxolotlClientWaypointsCommon.OPTIONS_PATH.resolveSibling(hud.getId().br$getPath() + ".json"), hud.getAllOptions());
-		hudConfigManager.suppressName("x");
-		hudConfigManager.suppressName("y");
-		hudConfigManager.suppressName(minimap.minimapOutline.getName());
-		hudConfigManager.suppressName(minimap.outlineColor.getName());
-		AxolotlClientConfig.getInstance().register(hudConfigManager);
-		hudConfigManager.load();
-		MinimapCommon.minimap.add(hud.getAllOptions(), false);
 		Events.CLIENT_READY.register(() -> {
+			var hudConfigManager = new JsonConfigManager(AxolotlClientCommon.resolveProfileConfigFile(AxolotlClientWaypointsCommon.MODID)
+				.resolve(hud.getId().br$getPath() + ".json"), hud.getAllOptions());
+			Events.CLIENT_STOP.register(hudConfigManager::save);
+			hudConfigManager.suppressName("x");
+			hudConfigManager.suppressName("y");
+			hudConfigManager.suppressName(minimap.minimapOutline.getName());
+			hudConfigManager.suppressName(minimap.outlineColor.getName());
+			AxolotlClientConfig.getInstance().register(hudConfigManager);
+			hudConfigManager.load();
+			MinimapCommon.minimap.add(hud.getAllOptions(), false);
 			AxolotlClientCommon.getInstance().getConfig().config.add(AxolotlClientWaypointsCommon.category, false);
 			HudManagerCommon.getInstance().addNonConfigured(hud);
+			var mainConfigManager = (JsonConfigManager) AxolotlClientConfig.getInstance().getConfigManager(AxolotlClientWaypointsCommon.category);
+			mainConfigManager.setFile(AxolotlClientCommon.resolveProfileConfigFile(AxolotlClientWaypointsCommon.MODID).resolve("options.json"));
+			hud.profileReloader = new ProfileAware() {
+				@Override
+				public void saveConfig() {
+					hudConfigManager.save();
+					mainConfigManager.save();
+				}
+
+				@Override
+				public void reloadConfig() {
+					mainConfigManager.save();
+					hudConfigManager.save();
+					mainConfigManager.setFile(AxolotlClientCommon.resolveProfileConfigFile(AxolotlClientWaypointsCommon.MODID).resolve("options.json"));
+					hudConfigManager.setFile(AxolotlClientCommon.resolveProfileConfigFile(AxolotlClientWaypointsCommon.MODID)
+						.resolve(hud.getId().br$getPath() + ".json"));
+					mainConfigManager.load();
+					hudConfigManager.load();
+				}
+			};
 		});
-		return hudConfigManager::save;
 	}
 }

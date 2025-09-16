@@ -54,4 +54,8 @@ public abstract class MinimapCommon {
 	public abstract void renderMap(AxoRenderContext ctx);
 
 	public abstract boolean isEnabled();
+
+	protected void init() {
+		minimap.add(enabled, lockMapToNorth, arrowScale, minimapOutline, outlineColor, enableBiomeBlending, mapScale, showWaypoints, showCardinalDirections);
+	}
 }

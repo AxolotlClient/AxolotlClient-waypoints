@@ -29,7 +29,6 @@ import io.github.axolotlclient.waypoints.AxolotlClientWaypointsCommon;
 import io.github.axolotlclient.waypoints.HudCreator;
 import io.github.axolotlclient.waypoints.util.ARGB;
 import io.github.axolotlclient.waypoints.waypoints.Waypoint;
-import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.minecraft.Util;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
@@ -66,12 +65,11 @@ public class Minimap extends MinimapCommon {
 	private final Minecraft minecraft = Minecraft.getInstance();
 
 	public void init() {
-		minimap.add(enabled, lockMapToNorth, arrowScale, minimapOutline, outlineColor, enableBiomeBlending, mapScale, showWaypoints, showCardinalDirections);
+		super.init();
 		AxolotlClientWaypointsCommon.category.add(Minimap.minimap);
 		if (AxolotlClientWaypointsCommon.AXOLOTLCLIENT_PRESENT) {
 			usingHud = true;
-			var save = HudCreator.createHud(this);
-			ClientLifecycleEvents.CLIENT_STOPPING.register(mc -> save.run());
+			HudCreator.createHud(this);
 		}
 	}
 

@@ -1,5 +1,9 @@
 ## Changelog
 
+### 0.0.1-beta.16
+
+- fix waypoints being rendered wrong on changed FoVs (<=1.21.1)
+
 ### 0.0.1-beta.15
 
 - add tolerance for waypoint distance & name rendering, currently 1/4 of the screen size on each side

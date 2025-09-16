@@ -27,14 +27,16 @@ import java.util.List;
 import io.github.axolotlclient.AxolotlClientConfig.api.options.Option;
 import io.github.axolotlclient.bridge.render.AxoRenderContext;
 import io.github.axolotlclient.bridge.util.AxoIdentifier;
+import io.github.axolotlclient.config.profiles.ProfileAware;
 import io.github.axolotlclient.modules.hud.gui.entry.BoxHudEntry;
 import io.github.axolotlclient.waypoints.AxolotlClientWaypointsCommon;
 
-public class MinimapHudEntry extends BoxHudEntry {
+public class MinimapHudEntry extends BoxHudEntry implements ProfileAware {
 
 	public static final AxoIdentifier ID = AxolotlClientWaypointsCommon.rl("minimap_hud");
 
 	private final MinimapCommon minimap;
+	public ProfileAware profileReloader;
 
 	public MinimapHudEntry(MinimapCommon minimap) {
 		super(minimap.size + 2, minimap.size + 2, true);
@@ -100,5 +102,15 @@ public class MinimapHudEntry extends BoxHudEntry {
 	@Override
 	public double getDefaultY() {
 		return 0.05;
+	}
+
+	@Override
+	public void saveConfig() {
+		profileReloader.saveConfig();
+	}
+
+	@Override
+	public void reloadConfig() {
+		profileReloader.reloadConfig();
 	}
 }
