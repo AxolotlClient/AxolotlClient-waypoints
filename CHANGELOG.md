@@ -1,5 +1,9 @@
 ## Changelog
 
+### 0.0.1-beta.17
+
+- fix more somewhat fov-related bugs
+
 ### 0.0.1-beta.16
 
 - fix waypoints being rendered wrong on changed FoVs (<=1.21.1)

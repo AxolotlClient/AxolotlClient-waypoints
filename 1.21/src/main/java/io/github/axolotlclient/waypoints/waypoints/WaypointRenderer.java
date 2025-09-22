@@ -66,6 +66,7 @@ public class WaypointRenderer {
 		stack.mulPose(cam.rotation().invert());
 		var camPos = minecraft.gameRenderer.getMainCamera().getPosition();
 		float fov = (float) ((GameRendererAccessor) minecraft.gameRenderer).invokeGetFov(cam, deltaTracker.getGameTimeDeltaPartialTick(true), true);
+		minecraft.gameRenderer.resetProjectionMatrix(minecraft.gameRenderer.getProjectionMatrix(fov));
 		worldRendererWaypoints.clear();
 
 		for (Waypoint waypoint : AxolotlClientWaypoints.getCurrentWaypoints()) {

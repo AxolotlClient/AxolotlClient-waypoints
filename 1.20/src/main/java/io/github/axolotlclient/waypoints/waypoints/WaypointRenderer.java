@@ -57,9 +57,8 @@ public class WaypointRenderer {
 		stack.pushPose();
 		var cam = minecraft.gameRenderer.getMainCamera();
 		var camPos = cam.getPosition();
-		minecraft.gameRenderer.resetProjectionMatrix(minecraft.gameRenderer.getProjectionMatrix(((GameRendererAccessor) minecraft.gameRenderer).invokeGetFov(cam, 0, false)));
-		RenderSystem.enableBlend();
 		float fov = (float) ((GameRendererAccessor) minecraft.gameRenderer).invokeGetFov(cam, tick, true);
+		RenderSystem.enableBlend();
 		worldRendererWaypoints.clear();
 
 		for (Waypoint waypoint : AxolotlClientWaypoints.getCurrentWaypoints()) {
@@ -97,22 +96,23 @@ public class WaypointRenderer {
 		stack.mulPose(cam.rotation());
 		float scale = 0.04F;
 		stack.scale(-scale, -scale, scale);
-		//fillRect(stack, bufferSource, -width / 2f, -height / 2f, 0f, width / 2f, height / 2f, waypoint.color().toInt());
-		drawFontBatch(waypoint.display(), -textWidth / 2f, -textHeight / 2f, stack.last().pose(), bufferSource, waypoint.color().toInt());
+		drawFontBatch(waypoint.display(), -textWidth / 2f, -textHeight / 2f, stack.last().pose(), bufferSource);
+		fillRect(stack, bufferSource, -width / 2f, -height / 2f, 0.001f, width / 2f, height / 2f, waypoint.color().toInt());
 		stack.popPose();
 	}
 
 	private void fillRect(PoseStack stack, MultiBufferSource.BufferSource source, float x, float y, float z, float x2, float y2, int color) {
-		var buf = source.getBuffer(RenderType.textBackgroundSeeThrough());
+		var buf = source.getBuffer(RenderType.gui());
 		var matrix = stack.last().pose();
 		buf.vertex(matrix, x, y, z).color(color).uv2(0xF000F0).endVertex();
 		buf.vertex(matrix, x, y2, z).color(color).uv2(0xF000F0).endVertex();
 		buf.vertex(matrix, x2, y2, z).color(color).uv2(0xF000F0).endVertex();
 		buf.vertex(matrix, x2, y, z).color(color).uv2(0xF000F0).endVertex();
+		source.endBatch();
 	}
 
-	private void drawFontBatch(String text, float x, float y, Matrix4f matrix, MultiBufferSource bufferSource, int bgColor) {
-		minecraft.font.drawInBatch(text, x, y, -1, false, matrix, bufferSource, Font.DisplayMode.NORMAL, bgColor, 0xF000F0);
+	private void drawFontBatch(String text, float x, float y, Matrix4f matrix, MultiBufferSource bufferSource) {
+		minecraft.font.drawInBatch(text, x, y, -1, false, matrix, bufferSource, Font.DisplayMode.NORMAL, 0, 0xF000F0);
 	}
 
 	public void renderWaypoints(GuiGraphics graphics, float delta) {
@@ -182,7 +182,7 @@ public class WaypointRenderer {
 				maxX > 0 && minY > 0 && maxX < guiWidth && minY < guiHeight ||
 				minX < guiWidth && maxX > 0 && minY < guiHeight && maxY > 0;
 		} else {
-			_3dOnScreen = false;
+		_3dOnScreen = false;
 		}
 		boolean displayX = Math.abs(result.x() - graphics.guiWidth() / 2f) < (_3dOnScreen ? Math.max(projWidth, width) : width) / 2f + graphics.guiWidth() / 4f;
 		boolean displayY = Math.abs(result.y() - graphics.guiHeight() / 2f) < (_3dOnScreen ? Math.max(height, projHeight) : height) / 2f + graphics.guiHeight() / 4f;
@@ -235,7 +235,6 @@ public class WaypointRenderer {
 		projection.mul(view);
 		viewProj.mul(projection);
 
-
 		if (orthoOffset == null && AxolotlClientWaypoints.renderOutOfViewWaypointsOnScreenEdge.get()) {
 			viewProj.w = Math.max(Math.abs(viewProj.x()), Math.max(Math.abs(viewProj.y()), viewProj.w()));
 		}
@@ -251,7 +250,7 @@ public class WaypointRenderer {
 		//float x = (graphics.guiWidth()/2f) + ((graphics.guiWidth() - width) * (viewProj.x() / 2f));
 		float resultX = 0.5f * (minecraft.getWindow().getGuiScaledWidth() * (projX + 1) - width * projX);
 		//float y = graphics.guiHeight() - (graphics.guiHeight()/2f + (graphics.guiHeight()-height) * (viewProj.y() / 2f));
-		float resultY = minecraft.getWindow().getGuiScaledWidth() * (0.5f - projY / 2) + (height * projY) / 2f;
+		float resultY = minecraft.getWindow().getGuiScaledHeight() * (0.5f - projY / 2) + (height * projY) / 2f;
 		return new Result(resultX, resultY);
 	}
 
