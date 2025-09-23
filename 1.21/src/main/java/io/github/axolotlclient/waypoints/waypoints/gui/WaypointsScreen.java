@@ -77,6 +77,7 @@ public class WaypointsScreen extends Screen {
 
 	@Override
 	public void onClose() {
+		AxolotlClientWaypoints.WAYPOINT_STORAGE.save();
 		minecraft.setScreen(parent);
 	}
 

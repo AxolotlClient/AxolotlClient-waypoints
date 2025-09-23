@@ -74,6 +74,7 @@ public class WaypointsScreen extends Screen {
 
 	@Override
 	public void onClose() {
+		AxolotlClientWaypoints.WAYPOINT_STORAGE.save();
 		minecraft.setScreen(parent);
 	}
 
@@ -157,8 +158,8 @@ public class WaypointsScreen extends Screen {
 		}
 
 		@Override
-		protected void renderList(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-			super.renderList(guiGraphics, mouseX, mouseY, partialTick);
+		protected int getScrollbarPosition() {
+			return getRowRight()+10;
 		}
 
 		private class Entry extends ContainerObjectSelectionList.Entry<Entry> {

@@ -161,7 +161,7 @@ public class EditWaypointScreen extends io.github.axolotlclient.AxolotlClientCon
 
 		int footerY = height - 33 / 2 - 20 / 2;
 		save = addDrawableChild(new VanillaButtonWidget(width / 2 - 2 - 150, footerY, 150, 20, I18n.translate("gui.done"), btn -> {
-			AxolotlClientWaypoints.WAYPOINT_STORAGE.create(new Waypoint(dimension.getText(), this.x, this.y, this.z, color.getOriginal(), name.getText(), display.getText()));
+			AxolotlClientWaypoints.WAYPOINT_STORAGE.replace(toEdit, new Waypoint(dimension.getText(), this.x, this.y, this.z, color.getOriginal(), name.getText(), display.getText()));
 			minecraft.openScreen(parent);
 		}));
 		addDrawableChild(new VanillaButtonWidget(width / 2 + 20, footerY, 150, 20, I18n.translate("gui.cancel"), btn -> minecraft.openScreen(parent)));

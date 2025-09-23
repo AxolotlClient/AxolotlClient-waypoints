@@ -104,10 +104,10 @@ public class WaypointRenderer {
 	private void fillRect(PoseStack stack, MultiBufferSource.BufferSource source, float x, float y, float z, float x2, float y2, int color) {
 		var buf = source.getBuffer(RenderType.gui());
 		var matrix = stack.last().pose();
-		buf.vertex(matrix, x, y, z).color(color).uv2(0xF000F0).endVertex();
-		buf.vertex(matrix, x, y2, z).color(color).uv2(0xF000F0).endVertex();
-		buf.vertex(matrix, x2, y2, z).color(color).uv2(0xF000F0).endVertex();
-		buf.vertex(matrix, x2, y, z).color(color).uv2(0xF000F0).endVertex();
+		buf.vertex(matrix, x, y, z).color(color).endVertex();
+		buf.vertex(matrix, x, y2, z).color(color).endVertex();
+		buf.vertex(matrix, x2, y2, z).color(color).endVertex();
+		buf.vertex(matrix, x2, y, z).color(color).endVertex();
 		source.endBatch();
 	}
 

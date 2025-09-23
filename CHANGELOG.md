@@ -1,5 +1,10 @@
 ## Changelog
 
+### 0.0.1-beta.19
+
+- fix some gui bugs
+- (1.8.9) fix more waypoint rendering bugs
+
 ### 0.0.1-beta.18
 
 - (1.8.9) fix waypoint name display positioning

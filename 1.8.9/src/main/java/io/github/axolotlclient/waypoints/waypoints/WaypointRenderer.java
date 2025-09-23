@@ -33,10 +33,12 @@ import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.Tessellator;
 import io.github.axolotlclient.AxolotlClientConfig.api.util.Colors;
 import io.github.axolotlclient.AxolotlClientConfig.impl.util.DrawUtil;
+import io.github.axolotlclient.modules.freelook.Perspective;
 import io.github.axolotlclient.waypoints.AxolotlClientWaypoints;
 import io.github.axolotlclient.waypoints.mixin.GameRendererAccessor;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiElement;
+import net.minecraft.client.render.Camera;
 import net.minecraft.client.render.Window;
 import net.minecraft.entity.Entity;
 import net.minecraft.util.math.Vec3d;
@@ -66,11 +68,8 @@ public class WaypointRenderer {
 		GlStateManager.color3f(1, 1, 1);
 		GlStateManager.pushMatrix();
 
-		var camPos = cam.getEyePosition(f);
-		var cpos = camPos.subtract(0, cam.getEyeHeight(), 0);
-		//var camPos = new Vector3d(cam.x, cam.y, cam.z);
-		//var prevCamPos = new Vector3d(cam.prevTickX, cam.prevTickY, cam.prevTickZ);
-		//camPos.sub(prevCamPos).mul(f).add(prevCamPos);
+		var camPos = Camera.getPos(cam, f);
+		var cpos = cam.getEyePosition(f).subtract(0, cam.getEyeHeight(), 0);
 
 		GlStateManager.depthMask(false);
 		GlStateManager.disableDepthTest();
@@ -109,7 +108,11 @@ public class WaypointRenderer {
 		GlStateManager.translated(waypoint.x() - camEyePos.x, waypoint.y() - camEyePos.y, waypoint.z() - camEyePos.z);
 		var dispatcher = minecraft.getEntityRenderDispatcher();
 		GlStateManager.rotatef(-dispatcher.cameraYaw, 0.0F, 1.0F, 0.0F);
-		GlStateManager.rotatef(dispatcher.cameraPitch, 1.0F, 0.0F, 0.0F);
+		if (Minecraft.getInstance().options.perspective == Perspective.THIRD_PERSON_FRONT.ordinal()) {
+			GlStateManager.rotatef(-dispatcher.cameraPitch, 1.0F, 0.0F, 0.0F);
+		} else {
+			GlStateManager.rotatef(dispatcher.cameraPitch, 1.0F, 0.0F, 0.0F);
+		}
 		float scale = 0.04F;
 		GlStateManager.scalef(-scale, -scale, scale);
 		GlStateManager.enableBlend();
@@ -165,7 +168,7 @@ public class WaypointRenderer {
 
 	private Matrix4f getProjectionMatrix(float fov) {
 		Matrix4f matrix4f = new Matrix4f();
-		return matrix4f.perspective(fov * ((float) Math.PI / 180F), (float) this.minecraft.width / (float) this.minecraft.height, 0.05F, minecraft.options.viewDistance * 4);
+		return matrix4f.perspective(fov * ((float) Math.PI / 180F), (float) this.minecraft.width / (float) this.minecraft.height, 0.05F, minecraft.options.viewDistance * 2);
 	}
 
 	private void renderWaypoint(Waypoint waypoint, float tick, Entity camera, List<Runnable> positionDrawn, int guiWidth, int guiHeight) {
@@ -175,7 +178,7 @@ public class WaypointRenderer {
 		int width = textWidth + Waypoint.displayXOffset() * 2;
 		int textHeight = minecraft.textRenderer.fontHeight;
 		int height = textHeight + Waypoint.displayYOffset() * 2;
-		var camPos = camera.getEyePosition(tick);
+		var camPos = Camera.getPos(camera, tick);
 
 		var displayStart = projectToScreen(guiWidth, guiHeight, camPos, fov, width, height, waypoint.x(), waypoint.y(), waypoint.z(), new Vector2f(-(width / 2f * 0.04f), (height / 2f * 0.04f)));
 		var displayEnd = projectToScreen(guiWidth, guiHeight, camPos, fov, width, height, waypoint.x(), waypoint.y(), waypoint.z(), new Vector2f((width / 2f * 0.04f), -(height / 2f * 0.04f)));
@@ -248,10 +251,11 @@ public class WaypointRenderer {
 	private @Nullable Result projectToScreen(int guiWidth, int guiHeight, Vec3d camPos, float fov, int width, int height, double x, double y, double z, Vector2f orthoOffset) {
 		viewProj.set(x, y, z, 1);
 		var dispatcher = minecraft.getEntityRenderDispatcher();
+		var pitch = Minecraft.getInstance().options.perspective == Perspective.THIRD_PERSON_FRONT.ordinal() ? -dispatcher.cameraPitch : dispatcher.cameraPitch;
 		if (orthoOffset != null) {
 			var vec = new Matrix4f();
 			var camRot = new Quaternionf()
-				.rotationYXZ(-dispatcher.cameraYaw * (float) (Math.PI / 180.0), dispatcher.cameraPitch * (float) (Math.PI / 180.0), 0.0F)
+				.rotationYXZ(-dispatcher.cameraYaw * (float) (Math.PI / 180.0), pitch * (float) (Math.PI / 180.0), 0.0F)
 				.rotateY((float) -(Math.PI)).invert();
 			vec.rotate(camRot.invert(new Quaternionf()));
 			vec.translate(orthoOffset.x(), orthoOffset.y(), 0);
@@ -260,7 +264,7 @@ public class WaypointRenderer {
 		}
 
 		view.rotation(new Quaternionf()
-			.rotationYXZ(-dispatcher.cameraYaw * (float) (Math.PI / 180.0), dispatcher.cameraPitch * (float) (Math.PI / 180.0), 0.0F)
+			.rotationYXZ(-dispatcher.cameraYaw * (float) (Math.PI / 180.0), pitch * (float) (Math.PI / 180.0), 0.0F)
 			.rotateY((float) -(Math.PI)).invert()).translate((float) -camPos.x, (float) -camPos.y, (float) -camPos.z);
 
 		Matrix4f projection = getProjectionMatrix(fov);

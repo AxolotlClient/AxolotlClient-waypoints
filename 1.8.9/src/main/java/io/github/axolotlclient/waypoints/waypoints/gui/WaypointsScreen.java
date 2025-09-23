@@ -68,6 +68,11 @@ public class WaypointsScreen extends io.github.axolotlclient.AxolotlClientConfig
 	}
 
 	@Override
+	public void removed() {
+		AxolotlClientWaypoints.WAYPOINT_STORAGE.save();
+	}
+
+	@Override
 	public void render(int mouseX, int mouseY, float delta) {
 		super.render(mouseX, mouseY, delta);
 		drawCenteredString(textRenderer, getTitle(), width / 2, 60 / 2 - 37 / 2, -1);
@@ -97,6 +102,11 @@ public class WaypointsScreen extends io.github.axolotlclient.AxolotlClientConfig
 		@Override
 		public int getRowWidth() {
 			return 300;
+		}
+
+		@Override
+		protected int getScrollbarPositionX() {
+			return getRowRight()+10;
 		}
 
 		private class Entry extends ElementListWidget.Entry<Entry> {
