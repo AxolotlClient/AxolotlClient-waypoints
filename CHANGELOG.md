@@ -1,5 +1,9 @@
 ## Changelog
 
+### 0.0.1-beta.18
+
+- (1.8.9) fix waypoint name display positioning
+
 ### 0.0.1-beta.17
 
 - fix more somewhat fov-related bugs
