@@ -252,7 +252,7 @@ public class WaypointRenderer {
 			var vec = new Matrix4f();
 			var camRot = new Quaternionf()
 				.rotationYXZ(-dispatcher.cameraYaw * (float) (Math.PI / 180.0), dispatcher.cameraPitch * (float) (Math.PI / 180.0), 0.0F)
-				.rotateY((float) -(Math.PI));
+				.rotateY((float) -(Math.PI)).invert();
 			vec.rotate(camRot.invert(new Quaternionf()));
 			vec.translate(orthoOffset.x(), orthoOffset.y(), 0);
 			vec.rotate(camRot);
