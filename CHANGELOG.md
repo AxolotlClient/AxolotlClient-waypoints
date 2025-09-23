@@ -1,5 +1,9 @@
 ## Changelog
 
+### 0.0.1-beta.20
+
+- fix config loading
+
 ### 0.0.1-beta.19
 
 - fix some gui bugs

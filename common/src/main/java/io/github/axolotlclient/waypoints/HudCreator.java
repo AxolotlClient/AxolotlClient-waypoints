@@ -57,6 +57,7 @@ public class HudCreator {
 			HudManagerCommon.getInstance().addNonConfigured(hud);
 			var mainConfigManager = (JsonConfigManager) AxolotlClientConfig.getInstance().getConfigManager(AxolotlClientWaypointsCommon.category);
 			mainConfigManager.setFile(AxolotlClientCommon.resolveProfileConfigFile(AxolotlClientWaypointsCommon.MODID).resolve("options.json"));
+			mainConfigManager.load();
 			hud.profileReloader = new ProfileAware() {
 				@Override
 				public void saveConfig() {

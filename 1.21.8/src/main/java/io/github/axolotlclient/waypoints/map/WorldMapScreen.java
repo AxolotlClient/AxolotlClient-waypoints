@@ -575,7 +575,7 @@ public class WorldMapScreen extends Screen {
 		public CompletableFuture<?> load() {
 			if (!loaded) {
 				loaded = true;
-				return Minecraft.getInstance().submit(supplier).thenApply(t -> tile = t);
+				return CompletableFuture.supplyAsync(supplier, Minecraft.getInstance()).thenApply(t -> tile = t);
 			}
 			return CompletableFuture.completedFuture(null);
 		}
