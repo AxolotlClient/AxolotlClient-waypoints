@@ -1,5 +1,9 @@
 ## Changelog
 
+### 0.0.1
+
+- bump version for initial release
+
 ### 0.0.1-beta.20
 
 - fix config loading
